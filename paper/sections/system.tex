@@ -5,11 +5,10 @@
 \label{sec:system}
 
 No metered load, fuel or outage records were available for the club, so every input in this
-study is taken from public data or derived from it. Following the practice for data-scarce sites,
-the load is reconstructed bottom-up and carried as low, base, and high scenarios rather than as a
-single estimate~\cite{mandelli2016}. Each input is labelled as verified (stated by a
+study is taken from public data or derived from it. The load is therefore reconstructed bottom-up and carried as low, base, and high scenarios rather
+than as a single estimate. Each input is labelled as verified (stated by a
 source), derived (computed from cited inputs), or assumed; the full register, with a source for
-every value, is published with the model code~\cite{faqrarepo}. The study is therefore a scenario-based feasibility assessment, and its conclusions are
+every value, is published with the model code.\footnote{\url{https://github.com/Joe-Sfeir/MicrogridProject}} The study is therefore a scenario-based feasibility assessment, and its conclusions are
 tested against the spread of these scenarios in Section~V.
 
 \subsection{Site}
@@ -40,22 +39,22 @@ weekend/holiday), and the season. Table~\ref{tab:load} lists the blocks and thei
 
 \emph{Ski lifts.} The lift power is computed from the work of lifting skiers ($mgH$, with ski friction
 on the surface lifts) and from a no-load share for the rope and drive, scaled by measured chairlift
-data from Madonna di Campiglio~\cite{viesi2023} and the no-load share reported
-in~\cite{blasuttigh2023}. Lebanon records about 300,000 skier visits per year~\cite{vanat2025};
+data from Madonna di Campiglio~\cite{viesi2023} and a published no-load share for chairlifts.
+Lebanon records about 300,000 skier visits per year;
 allocating the visits outside Mzaar by lift gives about 10,700 skier-days for Faqra. Because traffic
 is light, 86--94\% of the lift energy is no-load running, so the number of lifts in service matters
 more than the number of skiers.
 
 \emph{Hotel, restaurants and chalets.} Hotel and restaurant demand follows published energy-use
-intensities and schedules~\cite{cibse2008}, with monthly occupancy taken from
+intensities and schedules, with monthly occupancy taken from
 Lebanese tourism data. Chalet demand uses Lebanese household consumption per occupied
-day~\cite{worldbank2009} and an assumed 100 occupied days per year, typical of second homes in
+day and an assumed 100 occupied days per year, typical of second homes in
 mountain resorts. The chalets are the largest block, so the study
 also reports a club-only boundary.
 
 \emph{Auxiliary loads.} Road lighting assumes LED poles operated from dusk to dawn with dimming after
 midnight; water pumping follows per-capita demand and the energy intensity of lifting
-groundwater~\cite{plappally2012}, and the wastewater plant uses the treatment intensity from the same
+groundwater, and the wastewater plant uses the treatment intensity from the same
 review. Sports lighting, the pool, an electric-vehicle charger, security and offices make up the
 remainder.
 
@@ -89,7 +88,7 @@ Critical energy               & 67  & 184   & 518   & \\
 \emph{Critical load.} Loads are grouped by the priority classes of emergency and standby
 systems. Water supply, wastewater treatment, and security are fully critical. A
 share of 30\% of the hotel, restaurant, road-lighting and office load is critical, which matches the
-critical fraction used in resilience studies~\cite{anderson2018}. The lifts, chalets, pool, sports
+critical fraction used in resilience studies. The lifts, chalets, pool, sports
 lighting and vehicle charging can be shed. The critical load must always be served, while the
 remaining load may only be shed within the reliability limit of Section~IV.
 
@@ -115,13 +114,13 @@ overlap (Fig.~\ref{fig:loaddays}).
 
 \subsection{Solar Resource and Snow}
 Hourly PV output per installed kWp is taken from PVGIS for 2014--2023, with the SARAH-3 satellite
-irradiance, the local horizon, crystalline-silicon modules, and 14\% system losses~\cite{pvgisdocs}.
+irradiance, the local horizon, crystalline-silicon modules, and 14\% system losses.\footnote{\url{https://joint-research-centre.ec.europa.eu/pvgis}}
 Satellite and reanalysis sources agree within about 5\% from May to September, but differ by 30--40\%
 from December to March: PVGIS notes that snow-covered ground can be mistaken for cloud, which biases
-SARAH low in winter, while ERA5 tends to read high in mountain terrain~\cite{pvgisdocs}.
-A third source, the Solargis long-term means of the Global Solar Atlas~\cite{gsa2026}, lies between
+SARAH low in winter, while ERA5 tends to read high in mountain terrain.
+A third source, the Solargis long-term means of the Global Solar Atlas,\footnote{\url{https://globalsolaratlas.info}} lies between
 the two. With no ground station available, the base case applies the monthly bias correction that is
-the simplest form of site adaptation~\cite{polo2016}: each hour of the SARAH-3 series is scaled by the
+the simplest form of site adaptation: each hour of the SARAH-3 series is scaled by the
 ratio of the Solargis and SARAH-3 monthly irradiance,
 \begin{equation}
 a(t) = k_{m(t)} \, a_{\mathrm{SARAH}}(t), \qquad
@@ -134,8 +133,8 @@ unscaled SARAH-3 series and the PVGIS-ERA5 series serve as the low and high irra
 annual and December--March yield; the other nine years are used in the robustness
 check of Section~V.
 
-Snow on the modules is modelled with the method of Marion \textit{et al.}~\cite{marion2013} in its
-hourly form. The array is fully covered in any hour with at least 1~cm of
+Snow on the modules is modelled with the snow-coverage method of Marion \textit{et al.} (NREL,
+2013) in its hourly form. The array is fully covered in any hour with at least 1~cm of
 snowfall. Snow slides off at $0.197\sin\beta$ of the array height per hour, where $\beta$ is the tilt,
 whenever the air temperature exceeds $G_{\mathrm{POA}}/m$ with $m=-80$~W\,m$^{-2}$\,$^\circ$C$^{-1}$,
 and the output is reduced by the covered fraction. Hourly temperature comes from
@@ -155,26 +154,26 @@ three irradiance cases.}
 \subsection{Grid Availability}
 \'{E}lectricit\'{e} du Liban (EDL) publishes hourly energization records for each 20~kV feeder. The
 record of the Faqra feeder of the Faitroun substation covers December 2024 to October
-2026~\cite{edlfeeding2026}; the club is assumed to be supplied from this feeder. Over the 699 days the
+2026;\footnote{\url{https://edl.gov.lb/feeding.php}} the club is assumed to be supplied from this feeder. Over the 699 days the
 feeder was energized 9.7~h/day on average, 10\% of days had no supply at all, and seven outages lasted
 72~h or longer. Supply comes in irregular blocks rather than on a fixed schedule
 (Fig.~\ref{fig:grid}). The model uses the most recent full year, November 2025 to October 2026
 (8.1~h/day), as the binary availability $u_g(t)$. Fixed daily blocks of 4, 8 and 12~h, a case with no
 grid, and an added 72~h outage in the peak ski week are tested as alternatives. Energy from EDL is
-billed at a flat \$0.27/kWh plus a capacity charge, with no time-of-use rate~\cite{edltariff2024}.
+billed at a flat \$0.27/kWh plus a capacity charge, with no time-of-use rate.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figs/grid_heatmap.pdf}
 \caption{Hours in which the Faqra feeder was energized (blue), November 2025 to October 2026
-(mean 8.1~h/day)~\cite{edlfeeding2026}.}
+(mean 8.1~h/day).}
 \label{fig:grid}
 \end{figure}
 
 \subsection{Diesel Generators}
 The club's existing diesel generators supply the load whenever the grid is off. They are retained as
 backup and treated as a sunk cost; a case in which they must be replaced at \$750/kW is tested
-separately. Fuel use follows the linear fuel curve~\cite{skarstein1989}
+separately. Fuel use follows the standard linear fuel curve
 \begin{equation}
 F(t) = a \, P_{\mathrm{com}}(t) + b \, P_{dg}(t),
 \label{eq:fuel}
@@ -186,8 +185,8 @@ and $b=0.242$~L/kWh fitted to manufacturer data for six sets of 250--770~kVA. Th
 \subsection{Techno-Economic Parameters}
 Table~\ref{tab:param} lists the component parameters. Costs are in 2025--2026 US dollars, and
 annualization uses a real discount rate of 7.1\%, within the range reported for renewable projects
-in Lebanon~\cite{wb2024pad}. The battery price of \$192/kWh is the 2025 installed cost of
-lithium iron phosphate systems~\cite{ember2025,cole2025}; the value of \$350/kWh used in the course
+in Lebanon. The battery price of \$192/kWh is the 2025 installed cost of
+lithium iron phosphate systems; the value of \$350/kWh used in the course
 example is kept as a sensitivity. The battery power rating is limited to 0.5C.
 
 \begin{table}[!t]
@@ -201,17 +200,17 @@ example is kept as a sensitivity. The battery power rating is limited to 0.5C.
 Parameter & Base (range) \\
 \midrule
 PV capital cost~\cite{lcec2025}        & \$750/kWp (600--1,003) \\
-PV O\&M, life, degradation~\cite{atbpv2025} & \$18/kW-yr; 30~yr; 0.7\%/yr \\
-BESS capital cost~\cite{ember2025,cole2025} & \$192/kWh (125--334) \\
-BESS O\&M, calendar life~\cite{cole2025}   & 2.5\% of capex/yr; 15~yr \\
+PV O\&M, life, degradation & \$18/kW-yr; 30~yr; 0.7\%/yr \\
+BESS capital cost & \$192/kWh (125--334) \\
+BESS O\&M, calendar life   & 2.5\% of capex/yr; 15~yr \\
 Round-trip efficiency, SOC window      & 90\% (85--93); 10--100\% \\
 Degradation cost~\cite{seger2023}      & \$0.020/kWh discharged \\
 Diesel price~\cite{lorient2026}        & \$1.41/L (0.80--1.52) \\
 Diesel O\&M; minimum load              & \$0.013/kWh; 30\% \\
-EDL energy tariff~\cite{edltariff2024} & \$0.27/kWh \\
-Real discount rate~\cite{wb2024pad}    & 7.1\% (5.8--12.4) \\
+EDL energy tariff & \$0.27/kWh \\
+Real discount rate    & 7.1\% (5.8--12.4) \\
 CO$_2$, diesel / grid                  & 2.68~kg/L; 0.70~kg/kWh \\
 \bottomrule
-\multicolumn{2}{@{}p{0.95\columnwidth}@{}}{\scriptsize Sources and derivations for every value are listed in the assumption register~\cite{faqrarepo}.}
+\multicolumn{2}{@{}p{0.95\columnwidth}@{}}{\scriptsize Sources and derivations for every value are listed in the assumption register published with the model code.}
 \end{tabular}
 \end{table}
