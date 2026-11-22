@@ -97,6 +97,11 @@ c(ix.p_ex)  = -k.ex * dt;
 tb = zeros(nvar, 1);
 if c(ix.P_b) == 0, tb(ix.P_b) = s.tie; end
 if c(ix.P_d) == 0, tb(ix.P_d) = s.tie; end
+% Export is also a tie in two cases: at an export price of 0 (export or
+% curtail), and when the credit equals the tariff (importing and exporting
+% in the same hour costs nothing). A negligible cost on p_ex (s.tie_ex,
+% $/kWh) makes the solver export only what has value. Not in the reported cost.
+if s.export, tb(ix.p_ex) = s.tie_ex * dt; end
 
 % Penalties, only for dispatch-only runs with fixed sizes (s.elastic): they
 % keep the LP feasible and rank the goals: serve critical load first, then
@@ -135,8 +140,11 @@ cin = add_rows(cin, {ix.soc, ix.E_b}, {1, -(s.soc_min + kcap * (1 - s.soc_min))}
 
 % (3c) soc(t) >= SOC_min E_b
 % (R5.1) T1 chairlift recovery reserve (EN 13223): in every hour in which
-%      the lift runs, soc(t) >= SOC_min E_b + E_res
-cin = add_rows(cin, {ix.soc, ix.E_b}, {-1, s.soc_min}, -s.E_res * double(lift));
+%      the lift runs, soc >= SOC_min E_b + E_res. soc(t) is the energy at
+%      the start of hour t, so the rule is applied to soc(t) and to
+%      soc(t+1): the reserve is there from the start to the end of the hour.
+hold_res = lift | lift([T; (1:T - 1)']);            % start of, or just after, a lift hour
+cin = add_rows(cin, {ix.soc, ix.E_b}, {-1, s.soc_min}, -s.E_res * double(hold_res));
 
 % (3d) p_ch(t) <= P_b      (3e) p_dis(t) <= P_b
 cin = add_rows(cin, {ix.p_ch,  ix.P_b}, {1, -1}, zeros(T, 1));
@@ -248,7 +256,7 @@ R.n_ineq     = size(A, 1);
 R.n_nz       = nnz(Aeq) + nnz(A);
 R.T          = T;
 R.series     = struct('L', L, 'Lc', Lc, 'a', a, 'ug', ug, 'month', ser.month(:), 'kcap', kcap, ...
-                      'ski', ski, 'lift', lift);
+                      'ski', ski, 'lift', lift, 'hold_res', hold_res);
 if ~R.ok
     return
 end

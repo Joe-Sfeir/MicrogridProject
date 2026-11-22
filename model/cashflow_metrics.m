@@ -35,7 +35,9 @@ end
 % =========================================================================
 function r = irr_of(cf)
 % Bisection on the NPV. For an investment followed by net savings the NPV
-% falls as the rate rises, so the root is unique.
+% normally falls as the rate rises and there is one root. A large late
+% outflow can in principle give more than one; this returns the root found
+% in the bracket that starts at a rate of 0.
 if npv_at(cf, 0) > 0
     lo = 0;  hi = 0.1;
     while npv_at(cf, hi) > 0 && hi < 100

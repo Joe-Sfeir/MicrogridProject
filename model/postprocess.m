@@ -50,7 +50,7 @@ num = {'P_pv', 'E_b', 'P_b', 'P_d', 'P_gmax', 'cost', 'cost_no_deg', 'opex', 'c_
        'uns_max_hour', 'uns_winter_frac', 'uns_ski_frac', 'uns_week_frac', 'uns_week_start', ...
        'co2_t', 'co2_diesel_t', 'co2_grid_t', 'peak_load', 'chk_balance', 'chk_soc', ...
        'chk_simul_kW', 'chk_simul_h', 'chk_dg_curt_h', 'chk_dg_grid_h', 'chk_dg_charge_h', ...
-       'chk_udg_gap', 'chk_reserve', 'chk_export', 'dg_hours', 'dg_short_n1', 'dg_short_n2', ...
+       'chk_udg_gap', 'chk_reserve', 'chk_export', 'chk_imp_exp_kW', 'dg_hours', 'dg_short_n1', 'dg_short_n2', ...
        'dg_short_n3', 'chk_cost', 'ref_cost', 'ref_lcoe', 'ref_P_d', 'ref_opex', 'savings', ...
        'savings_frac', 'savings_no_deg', 'savings_no_deg_frac', 'co2_saved_t'};
 for j = 1:numel(num), K.(num{j}) = NaN; end
@@ -159,11 +159,12 @@ K.dg_short_n1 = sum(dg_on & R.p_dg < s.m_min * R.P_d / 1 - tol);
 K.dg_short_n2 = sum(dg_on & R.p_dg < s.m_min * R.P_d / 2 - tol);
 K.dg_short_n3 = sum(dg_on & R.p_dg < s.m_min * R.P_d / 3 - tol);
 % (R5.1) T1 lift reserve: largest shortfall of soc below SOC_min E_b + E_res
-% in the hours in which the lift runs (0 = respected)
-lift = R.series.lift;
-K.chk_reserve = max([0; s.soc_min * R.E_b + s.E_res - R.soc(lift)]) * (s.E_res > 0);
+% at the start or the end of an hour in which the lift runs (0 = respected)
+K.chk_reserve = max([0; s.soc_min * R.E_b + s.E_res - R.soc(R.series.hold_res)]) * (s.E_res > 0);
 % export limits (4') and (4''): largest violation (0 = respected)
 K.chk_export = max([0; R.p_g + R.p_ex - R.series.ug * R.P_gmax; R.p_ex - R.p_pv]);
+% import and export in the same hour (kW): a wash when credit = tariff
+K.chk_imp_exp_kW = max(min(R.p_g, R.p_ex));
 % cost from the breakdown equals the cost part of the solver objective
 K.chk_cost = abs(K.cost - R.obj_cost);
 

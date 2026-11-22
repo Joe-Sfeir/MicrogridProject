@@ -94,6 +94,7 @@ s.elastic  = false;                      % true only for dispatch-only runs
 s.pen_ls_n = 10;                         % $/kWh, numerical weights for elastic runs
 s.pen_ls_c = 1000;
 s.tie      = 1e-3;                       % $/kW-yr tie-breaker on zero-cost sizes
+s.tie_ex   = 1e-5;                       % $/kWh tie-breaker on export
 
 base = s;
 if nargout < 2, return; end
@@ -155,12 +156,16 @@ for x = v(abs(v - base.lpsp_max) > 1e-12)
     sens = add(sens, base, sprintf('lpsp_%s', strrep(sprintf('%g', 100 * x), '.', 'p')), ...
                'LPSP limit', '', sprintf('LPSP %g%%', 100 * x), 'lpsp_max', x);
 end
-% R1 variant: 1% of the load may be shed, but never on a ski day
+% R1 variant: 1% of the load may be shed, but never on a ski day (the 1% is
+% set by the round-2 brief; it is not a key of parameters.json)
 sens = add(sens, base, 'lpsp1_offpeak', 'LPSP limit', '', 'LPSP 1%, none on ski days', ...
            'lpsp_max', 0.01, 'no_shed_ski', true);
 
-% grid export of PV surplus (R2)
+% grid export of PV surplus (R2). The model always applies (4') and (4''):
+% check that parameters.json still asks for them.
 X = P.grid.export;
+assert(X.only_when_grid_energised && X.only_from_pv, 'scenarios:export', ...
+       'The model exports only PV and only while the grid is on; parameters.json says otherwise.');
 sens = add(sens, base, 'export_nm', 'Grid export', '', ...
            sprintf('net metering at %.2f $/kWh', X.net_metering_credit_per_kWh), ...
            'export', true, 'c_ex', X.net_metering_credit_per_kWh, 'export_cap_import', true);

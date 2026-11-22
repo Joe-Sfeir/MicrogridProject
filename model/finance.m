@@ -35,7 +35,11 @@ function F = finance(s, K, Kyr, years, P)
 %   F.npv_simple, F.npv_annualized, F.gap, F.gap_*    consistency check (R3.8)
 
 E   = P.economics.npv;
+assert(E.exclude_degradation_cost_from_cash_flow, 'finance:throughput', ...
+       'The cash flow leaves the battery throughput cost out; parameters.json says otherwise.');
 N   = E.horizon_yr;
+assert(years(1) == 1 && years(end) >= N, 'finance:years', ...
+       'The dispatch years must run from year 1 to the horizon (%d years).', N);
 rate = P.economics.real_discount_rate(2);          % base real discount rate
 deg = P.pv.degradation_pct_yr(2) / 100;            % PV degradation per year
 y   = 1:N;
@@ -89,6 +93,7 @@ F.disc = M.disc;  F.cum = M.cum;  F.cum_disc = M.cum_disc;
 % shedding in the later years (PV degraded, diesel limited to the plant)
 F.max_lpsp_later  = max([Kyr.lpsp]);
 F.max_uns_c_later = max([Kyr.E_uns_c]);
+F.max_P_d_later   = max([Kyr.P_d]);              % diesel rating used, largest over the years
 
 % yearly table
 F.columns = {'year', 'pv_output_factor', 'capex', 'battery_replacement', 'diesel_replacement', ...

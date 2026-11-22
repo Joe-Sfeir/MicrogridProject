@@ -15,8 +15,16 @@ t0 = tic;
 
 if exist('OCTAVE_VERSION', 'builtin') == 0
     % ---------------- MATLAB ----------------
-    opts = optimoptions('linprog', 'Display', 'none');
-    [x, fval, exitflag, out] = linprog(f, A, b, Aeq, beq, lb, ub, opts);
+    % linprog's default ConstraintTolerance is 1e-4, looser than the 1e-6 kW
+    % asked of the power balance: tighten it. If this release does not
+    % accept the value, solve with the defaults.
+    opts0 = optimoptions('linprog', 'Display', 'none');
+    try
+        opts = optimoptions(opts0, 'ConstraintTolerance', 1e-8);
+        [x, fval, exitflag, out] = linprog(f, A, b, Aeq, beq, lb, ub, opts);
+    catch
+        [x, fval, exitflag, out] = linprog(f, A, b, Aeq, beq, lb, ub, opts0);
+    end
     info.solver = 'MATLAB linprog';
     if isfield(out, 'algorithm'),  info.solver = ['MATLAB linprog (' out.algorithm ')']; end
     if isfield(out, 'iterations'), info.iterations = out.iterations; end

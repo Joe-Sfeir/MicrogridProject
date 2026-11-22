@@ -173,8 +173,9 @@ s.name = 'toy8_netmeter';
 s.price_diesel = 1.5;
 s.c_ex = s.c_grid;  s.export_cap_import = true;
 [~, K] = run_case(s);
-near(K.E_export - K.E_grid, 0, 'case 8: export equals import (cap binding)');
-assert(K.E_export >= 1200 - 1e-6, 'case 8: at least the night import is exported');
+near(K.E_export, 1200, 'case 8: export equals the night import (cap binding)');
+near(K.E_grid,   1200, 'case 8: grid import');
+near(K.chk_imp_exp_kW, 0, 'case 8: no import and export in the same hour');
 near(K.c_grid + K.c_export, 0, 'case 8: net grid bill');
 near(K.E_diesel, 1200, 'case 8: diesel energy');
 near(K.cost, 500 * (crf(0.10, 20) * 1000 + 20) + 1200 * (1.5 * 0.27 + 0.01), 'case 8: cost');
@@ -182,13 +183,17 @@ near(K.cost, 500 * (crf(0.10, 20) * 1000 + 20) + 1200 * (1.5 * 0.27 + 0.01), 'ca
 s.name = 'toy8_nocap';
 s.export_cap_import = false;
 [~, K] = run_case(s);
-near(K.E_export - K.E_grid, 2400 - 1200, 'case 8: net export without the cap');
+near(K.E_export, 2400, 'case 8: whole surplus exported without the cap');
+near(K.E_grid,   1200, 'case 8: grid import without the cap');
 
 % ---------------------------------------------------------------- Case 9
 % Case 1 (island PV + battery) with a 50 kWh reserve while the lift runs.
+% The reserve holds at the start and at the end of each lift hour.
 % (a) Lift in hour 7, when the battery is at its lowest: the whole SOC
 %     window moves up by 50 kWh, E_b = (swing + 50) / (1 - SOC_min).
 % (b) Lift in hour 13, when the battery is well above the reserve: no change.
+% (c) Lift in hour 6, the last hour of the night: the battery is at its
+%     lowest at the END of that hour, so the result is the same as in (a).
 s = toy_scenario();
 s.name = 'toy9_reserve';
 s.price_diesel = 1000;
@@ -203,6 +208,9 @@ near(K.chk_reserve, 0, 'case 9a: reserve respected');
 s.series.lift = double(hr == 13);
 [R, ~] = run_case(s);
 near(R.E_b, E_b, 'case 9b: reserve not binding');
+s.series.lift = double(hr == 6);
+[R, ~] = run_case(s);
+near(R.E_b, (swing + 50) / 0.9, 'case 9c: reserve at the end of the lift hour');
 
 % --------------------------------------------------------------- Case 10
 % Cash flow: -1000 in year 0, +600 in years 1 and 2, discount rate 10 %.
@@ -282,7 +290,7 @@ s.export = false;  s.c_ex = 0;  s.export_cap_import = false;
 s.lpsp_max = 0;  s.no_shed_ski = false;  s.re_min = 0;
 s.P_gmax = [];
 s.co2_diesel = 2.68;  s.co2_grid = 0.70;
-s.fix = struct();  s.cap = struct();  s.pv_scale = 1;
+s.fix = struct();  s.cap = struct();  s.pv_scale = 1;  s.tie_ex = 1e-5;
 s.elastic = false;  s.pen_ls_n = 10;  s.pen_ls_c = 1000;
 s.tie = 1e-3;
 s.series = [];
