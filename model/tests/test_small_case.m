@@ -12,6 +12,10 @@ function test_small_case()
 %   Case 4  dispatch-only with a diesel set that is too small (elastic run)
 %   Case 5  case 1 with the cold-weather capacity factor 0.87
 %   Case 6  case 1 with the battery cost split into energy and power parts
+%   Case 7  export: none while the grid is off, none above PV (4'), (4'')
+%   Case 8  net metering: export credits capped at the year's import (4''')
+%   Case 9  T1 lift reserve in the battery (R5.1)
+%   Case 10 NPV, IRR and payback of a two-year cash flow
 
 addpath(fileparts(fileparts(mfilename('fullpath'))));
 fprintf('test_small_case\n');
@@ -128,6 +132,101 @@ near(R.E_b, E_b, 'case 6: E_b');
 near(R.P_b, P_b, 'case 6: P_b');
 near(K.cost, cost, 'case 6: cost');
 
+% ---------------------------------------------------------------- Case 7
+% Export at 0.10 $/kWh. PV fixed at 500 kWp (400 kW in the 12 sun hours),
+% no battery, 100 kW load, connection P_gmax = 200 kW, grid on in 6-hour
+% blocks. Diesel is cheap (0.2 $/L -> 0.064 $/kWh), cheaper than both the
+% grid and the export price, so only (4'') stops it from being exported.
+%   sun, grid on  (hours 13-18): PV 100 to load, 200 exported (connection
+%                                limit (4')), 100 curtailed
+%   sun, grid off (hours 7-12):  PV 100 to load, 0 exported (4'), 300 curtailed
+%   night (24 h per 2 days x 100 kW = 2400 kWh): diesel, and no export (4'')
+%   export 200 x 12 = 2400 kWh, curtailed 100 x 12 + 300 x 12 = 4800 kWh
+%   cost = 500 x (CRF(10%,20) x 1000 + 20) + 2400 x 0.064 - 2400 x 0.10
+s = toy_scenario();
+s.name = 'toy7_export';
+s.fix = struct('P_pv', 500, 'E_b', 0, 'P_b', 0);
+s.P_gmax = 200;
+s.price_diesel = 0.2;
+s.export = true;  s.c_ex = 0.10;
+s.series = toy_series(T, 100, 30, 0.8 * sun, grid_on);
+[R, K] = run_case(s);
+near(K.E_export, 2400, 'case 7: exported energy');
+near(K.E_curt,   4800, 'case 7: curtailed energy');
+near(K.E_diesel, 2400, 'case 7: diesel energy');
+near(K.E_grid,      0, 'case 7: grid import');
+near(K.cost, 500 * (crf(0.10, 20) * 1000 + 20) + 2400 * (0.2 * 0.27 + 0.01) - 2400 * 0.10, 'case 7: cost');
+assert(all(R.p_ex(grid_on == 0) < 1e-6), 'case 7: export while the grid is off');
+assert(all(R.p_ex <= R.p_pv + 1e-6), 'case 7: export above PV');
+assert(all(R.p_ex(sun == 0) < 1e-6), 'case 7: export at night');
+near(max(R.p_ex), 200, 'case 7: export limited by the connection');
+near(K.re_frac, 2400 / 4800, 'case 7: PV used on site / load');   % 100 kW x 24 sun hours
+
+% ---------------------------------------------------------------- Case 8
+% Net metering at the tariff (0.25 $/kWh) with the annual cap, diesel at
+% 1.5 $/L (0.415 $/kWh). Night hours with the grid on (1-6) import
+% 100 x 12 = 1200 kWh; night hours with the grid off (19-24) need 1200 kWh
+% of diesel. The PV surplus that could be exported is 2400 kWh, but credits
+% stop at the import: net import = 0 and the grid bill is 0.
+%   cost = 500 x (CRF x 1000 + 20) + 1200 x 0.415
+s.name = 'toy8_netmeter';
+s.price_diesel = 1.5;
+s.c_ex = s.c_grid;  s.export_cap_import = true;
+[~, K] = run_case(s);
+near(K.E_export, 1200, 'case 8: export equals the night import (cap binding)');
+near(K.E_grid,   1200, 'case 8: grid import');
+near(K.chk_imp_exp_kW, 0, 'case 8: no import and export in the same hour');
+near(K.c_grid + K.c_export, 0, 'case 8: net grid bill');
+near(K.E_diesel, 1200, 'case 8: diesel energy');
+near(K.cost, 500 * (crf(0.10, 20) * 1000 + 20) + 1200 * (1.5 * 0.27 + 0.01), 'case 8: cost');
+% without the cap the whole surplus is credited
+s.name = 'toy8_nocap';
+s.export_cap_import = false;
+[~, K] = run_case(s);
+near(K.E_export, 2400, 'case 8: whole surplus exported without the cap');
+near(K.E_grid,   1200, 'case 8: grid import without the cap');
+
+% ---------------------------------------------------------------- Case 9
+% Case 1 (island PV + battery) with a 50 kWh reserve while the lift runs.
+% The reserve holds at the start and at the end of each lift hour.
+% (a) Lift in hour 7, when the battery is at its lowest: the whole SOC
+%     window moves up by 50 kWh, E_b = (swing + 50) / (1 - SOC_min).
+% (b) Lift in hour 13, when the battery is well above the reserve: no change.
+% (c) Lift in hour 6, the last hour of the night: the battery is at its
+%     lowest at the END of that hour, so the result is the same as in (a).
+s = toy_scenario();
+s.name = 'toy9_reserve';
+s.price_diesel = 1000;
+s.E_res = 50;
+s.series = toy_series(T, 100, 30, 0.8 * sun, zeros(T, 1));
+s.series.lift = double(hr == 7);
+[R, K] = run_case(s);
+near(R.E_b, (swing + 50) / 0.9, 'case 9a: E_b with the lift reserve');
+near(R.P_pv, P_pv, 'case 9a: P_pv unchanged');
+near(min(R.soc(hr == 7)), 0.1 * R.E_b + 50, 'case 9a: SOC at the reserve when the lift runs');
+near(K.chk_reserve, 0, 'case 9a: reserve respected');
+s.series.lift = double(hr == 13);
+[R, ~] = run_case(s);
+near(R.E_b, E_b, 'case 9b: reserve not binding');
+s.series.lift = double(hr == 6);
+[R, ~] = run_case(s);
+near(R.E_b, (swing + 50) / 0.9, 'case 9c: reserve at the end of the lift hour');
+
+% --------------------------------------------------------------- Case 10
+% Cash flow: -1000 in year 0, +600 in years 1 and 2, discount rate 10 %.
+%   NPV  = -1000 + 600/1.1 + 600/1.21              =  41.3223
+%   IRR: 600 x + 600 x^2 = 1000 with x = 1/(1+r);  x = 0.884437, r = 13.0662 %
+%   simple payback     = 1 + 400/600               = 1.6667 yr
+%   discounted payback = 1 + 454.5455/495.8678     = 1.9167 yr
+M = cashflow_metrics([-1000 600 600], 0.10);
+near(M.npv, -1000 + 600 / 1.1 + 600 / 1.21, 'case 10: NPV');
+near(M.irr, 1200 / (-600 + sqrt(600 ^ 2 + 4 * 600 * 1000)) - 1, 'case 10: IRR');
+near(M.payback, 1 + 400 / 600, 'case 10: simple payback');
+near(M.payback_disc, 1 + (1000 - 600 / 1.1) / (600 / 1.21), 'case 10: discounted payback');
+M = cashflow_metrics([-1000 300 300], 0.10);
+assert(isnan(M.payback) && M.irr < 0, 'case 10: a project that never pays back');
+fprintf('  %-16s ok\n', 'toy10_npv_irr');
+
 fprintf('All small-case tests passed.\n');
 end
 
@@ -144,7 +243,9 @@ assert(K.chk_simul_kW < tol, '%s: simultaneous charge and discharge', s.name);
 assert(all(R.soc <= R.E_b + tol) && all(R.soc >= s.soc_min * R.E_b - tol), '%s: SOC bounds', s.name);
 assert(all(R.p_ch <= R.P_b + tol) && all(R.p_dis <= R.P_b + tol), '%s: battery power', s.name);
 assert(R.P_b <= s.c_max * R.E_b + tol, '%s: C-rate', s.name);
-assert(all(R.p_g <= R.series.ug * R.P_gmax + tol), '%s: grid limit', s.name);
+assert(all(R.p_g + R.p_ex <= R.series.ug * R.P_gmax + tol), '%s: grid limit', s.name);
+assert(K.chk_export < tol, '%s: export limits', s.name);
+assert(K.chk_reserve < tol, '%s: T1 lift reserve', s.name);
 assert(all(R.p_dg <= R.u_dg + tol) && all(R.u_dg <= R.P_d + tol), '%s: diesel limits', s.name);
 assert(all(R.p_dg >= s.m_min * R.u_dg - tol), '%s: diesel minimum load', s.name);
 assert(K.chk_cost < 1e-6 * max(1, K.cost), '%s: cost breakdown does not match objective', s.name);
@@ -164,6 +265,8 @@ ser.Lc    = crit_kW * ones(T, 1);
 ser.a     = a(:);
 ser.ug    = ug(:);
 ser.month = ones(T, 1);                       % January
+ser.ski   = zeros(T, 1);                      % no ski day
+ser.lift  = zeros(T, 1);                      % T1 lift not running
 end
 
 % =========================================================================
@@ -179,13 +282,15 @@ s.c_b_allin = 300;  s.c_bE = 200;  s.c_bP = 200;  s.om_b_frac = 0.02;  s.n_b = 1
 s.eta_ch = 0.95;  s.eta_dis = 0.95;  s.soc_min = 0.1;  s.c_max = 0.5;
 s.c_deg = 0.02;   s.c_ch = 0;
 s.cold_factor = 1;  s.cold_months = [12 1 2 3];
+s.E_res = 0;
 s.price_diesel = 1.5;  s.fuel_a = 0.02;  s.fuel_b = 0.25;  s.om_dg = 0.01;
 s.c_d = 0;  s.n_d = 15;  s.m_min = 0.3;
 s.c_grid = 0.25;
-s.lpsp_max = 0;  s.re_min = 0;
+s.export = false;  s.c_ex = 0;  s.export_cap_import = false;
+s.lpsp_max = 0;  s.no_shed_ski = false;  s.re_min = 0;
 s.P_gmax = [];
 s.co2_diesel = 2.68;  s.co2_grid = 0.70;
-s.fix = struct();
+s.fix = struct();  s.cap = struct();  s.pv_scale = 1;  s.tie_ex = 1e-5;
 s.elastic = false;  s.pen_ls_n = 10;  s.pen_ls_c = 1000;
 s.tie = 1e-3;
 s.series = [];

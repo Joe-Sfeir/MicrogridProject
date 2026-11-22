@@ -1,10 +1,11 @@
-function [base, sens] = scenarios(D, tilt)
-%SCENARIOS  Base case and one-at-a-time sensitivity scenarios.
+function [base, sens, sweep] = scenarios(D, tilt)
+%SCENARIOS  Base case, one-at-a-time sensitivities and the diesel price sweep.
 %
-%   base         = scenarios(D)          base case at PV tilt 40 deg
-%   [base, sens] = scenarios(D, tilt)    base case at the given tilt, and a
-%                                        struct array of sensitivities, each
-%                                        changing one thing from that base
+%   base                = scenarios(D)          base case at PV tilt 40 deg
+%   [base, sens]        = scenarios(D, tilt)    base case at the given tilt and a
+%                                               struct array of sensitivities,
+%                                               each changing one thing
+%   [base, sens, sweep] = scenarios(D, tilt)    also the diesel price sweep
 %
 % Every number is the base (middle) value of inputs/parameters.json; low and
 % high are elements 1 and 3 of the same arrays. Use as_reference.m to get the
@@ -56,6 +57,8 @@ s.c_deg     = P.battery.degradation_cost_per_kWh_discharged(BASE);
 s.c_ch      = 0;                         % optional small cost on charging
 s.cold_factor = P.battery.cold_capacity_factor_decmar(BASE);   % 1.0 = no derating
 s.cold_months = [12 1 2 3];
+% T1 chairlift recovery reserve kept in the battery while the lift runs (R5.1)
+s.E_res = P.lift_T1_recovery.energy_reserve_kWh(BASE);
 
 % diesel
 s.price_diesel = P.diesel.price_per_L(BASE);
@@ -69,9 +72,14 @@ s.m_min  = P.diesel.min_load_frac;
 % grid
 s.c_grid = P.grid.edl_tariff_per_kWh(BASE);
 s.P_gmax = [];                           % [] = peak of the scenario's load
+% export of PV surplus (R2): off in the base case
+s.export = false;                        % constraints (4'), (4'') active
+s.c_ex   = 0;                            % $/kWh credited for exported PV
+s.export_cap_import = false;             % (4''') annual export <= annual import
 
 % reliability
-s.lpsp_max = P.reliability.lpsp_energy_max;
+s.lpsp_max = P.reliability.lpsp_energy_max;      % 0 from round 2: no shedding
+s.no_shed_ski = false;                   % true: ls_n = 0 on ski days (R1 variant)
 s.re_min   = 0;                          % constraint (7) off
 
 % emissions
@@ -80,10 +88,13 @@ s.co2_grid   = P.grid.co2_kg_per_kWh;
 
 % run control
 s.fix      = struct();                   % fixed sizes, e.g. s.fix.P_pv = 0
+s.cap      = struct();                   % size limits, e.g. s.cap.P_d = 519
+s.pv_scale = 1;                          % multiplier on the PV series (degradation)
 s.elastic  = false;                      % true only for dispatch-only runs
 s.pen_ls_n = 10;                         % $/kWh, numerical weights for elastic runs
 s.pen_ls_c = 1000;
 s.tie      = 1e-3;                       % $/kW-yr tie-breaker on zero-cost sizes
+s.tie_ex   = 1e-5;                       % $/kWh tie-breaker on export
 
 base = s;
 if nargout < 2, return; end
@@ -145,6 +156,26 @@ for x = v(abs(v - base.lpsp_max) > 1e-12)
     sens = add(sens, base, sprintf('lpsp_%s', strrep(sprintf('%g', 100 * x), '.', 'p')), ...
                'LPSP limit', '', sprintf('LPSP %g%%', 100 * x), 'lpsp_max', x);
 end
+% R1 variant: 1% of the load may be shed, but never on a ski day (the 1% is
+% set by the round-2 brief; it is not a key of parameters.json)
+sens = add(sens, base, 'lpsp1_offpeak', 'LPSP limit', '', 'LPSP 1%, none on ski days', ...
+           'lpsp_max', 0.01, 'no_shed_ski', true);
+
+% grid export of PV surplus (R2). The model always applies (4') and (4''):
+% check that parameters.json still asks for them.
+X = P.grid.export;
+assert(X.only_when_grid_energised && X.only_from_pv, 'scenarios:export', ...
+       'The model exports only PV and only while the grid is on; parameters.json says otherwise.');
+sens = add(sens, base, 'export_nm', 'Grid export', '', ...
+           sprintf('net metering at %.2f $/kWh', X.net_metering_credit_per_kWh), ...
+           'export', true, 'c_ex', X.net_metering_credit_per_kWh, 'export_cap_import', true);
+for x = X.export_price_sweep_per_kWh(:)'
+    sens = add(sens, base, sprintf('export_p%s', strrep(sprintf('%.2f', x), '.', 'p')), ...
+               'Grid export', '', sprintf('sold at %.2f $/kWh', x), 'export', true, 'c_ex', x);
+end
+
+% T1 chairlift recovery reserve removed (R5.1: what the reserve costs)
+sens = add(sens, base, 'no_T1_reserve', 'T1 lift reserve', '', 'no reserve', 'E_res', 0);
 
 % cold-weather battery derating in Dec-Mar
 v = P.battery.cold_capacity_factor_decmar(HIGH);
@@ -161,6 +192,14 @@ sens = add(sens, base, 'batt_split', 'Battery cost form', '', ...
 
 % grid connection not limiting (the bound used in tools/prototype_lp.py)
 sens = add(sens, base, 'grid_5MW', 'Grid connection', '', '5 MW connection', 'P_gmax', 5000);
+if nargout < 3, return; end
+
+% ------------------------------------------------- diesel price sweep (R4)
+sweep = base([]);
+for x = P.diesel.price_sweep_per_L(:)'
+    sweep = add(sweep, base, sprintf('dsweep_%s', strrep(sprintf('%.2f', x), '.', 'p')), ...
+                'Diesel price sweep', '', sprintf('%.2f $/L', x), 'price_diesel', x);
+end
 end
 
 % =========================================================================
