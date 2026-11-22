@@ -20,9 +20,9 @@ The model minimizes the annualized cost of supply,
 \begin{equation}
 \begin{split}
 \min\; C = {} & \left[\mathrm{CRF}_{pv}\,c_{pv} + m_{pv}\right] P_{pv}
- + \left[\mathrm{CRF}_{b} + \mu_b\right] c_b E_b
- + \mathrm{CRF}_{d}\,c_d P_d \\
- & + \sum_{t=1}^{T} \Big[ c_g\, p_g(t) + c_f F(t) + m_{d} P_{dg}(t) + c_{deg}\, p_{dis}(t) \Big]\Delta t,
+ + \left[\mathrm{CRF}_{b} + \mu_b\right] c_b E_b + \mathrm{CRF}_{d}\,c_d P_d \\
+ & + \sum_{t=1}^{T} \Big[ c_g\, p_g(t) + c_f F(t) \\
+ & \qquad + m_{d} P_{dg}(t) + c_{deg}\, p_{dis}(t) \Big]\Delta t,
 \end{split}
 \label{eq:obj}
 \end{equation}
@@ -38,9 +38,9 @@ rate $i$:
 \end{equation}
 
 \subsection{Constraints}
-\emph{Power balance} in every hour:
+\emph{Power balance} in every hour $t$ (time index omitted):
 \begin{equation}
-p_{pv}(t) + p_{dis}(t) + p_g(t) + P_{dg}(t) + \ell_c(t) + \ell_n(t) = P_L(t) + p_{ch}(t).
+p_{pv} + p_{dis} + p_g + P_{dg} + \ell_c + \ell_n = P_L + p_{ch}.
 \label{eq:balance}
 \end{equation}
 
@@ -50,12 +50,14 @@ $p_{pv}(t) + p_{cur}(t) = a(t)\,P_{pv}$, with $a(t)$ from~\eqref{eq:scale} inclu
 \emph{Battery.} The stored energy evolves as
 \begin{equation}
 e(t+1) = e(t) + \eta_{ch}\,p_{ch}(t)\Delta t - \frac{p_{dis}(t)\Delta t}{\eta_{dis}},
-\qquad e(T+1)=e(1),
 \label{eq:soc}
 \end{equation}
-with $\eta_{ch}=\eta_{dis}=0.9487$ (90\% round trip). The cyclic condition prevents the year from
+with $\eta_{ch}=\eta_{dis}=0.9487$ (90\% round trip) and the cyclic condition $e(T+1)=e(1)$, which prevents the year from
 ending on stored energy it did not produce. The limits are
-$\mathrm{SOC}_{\min}E_b \le e(t) \le E_b$, $p_{ch}(t),\,p_{dis}(t) \le P_b$, and $P_b \le 0.5\,E_b$.
+\begin{equation}
+\mathrm{SOC}_{\min}E_b \le e(t) \le E_b, \quad p_{ch}(t),\,p_{dis}(t) \le P_b \le 0.5\,E_b.
+\label{eq:batlim}
+\end{equation}
 
 \emph{Grid.} Import is possible only when the feeder is energized:
 \begin{equation}
