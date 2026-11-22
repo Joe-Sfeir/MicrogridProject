@@ -1,0 +1,24 @@
+% Section I -- Introduction
+\section{Introduction}
+
+Lebanon's power sector has been in crisis for decades, and the financial collapse that began in 2019 turned chronic rationing into near-total blackouts~\cite{tarnini2023}. Diesel generators fill the gap at a cost that follows the fuel price: diesel nearly doubled between February and September 2026, reaching about \$1.49/L, and the official generator tariff rose to roughly \$0.59/kWh~\cite{lorient2026}. Solar PV expanded rapidly in response, from 92~MWp in 2020 to more than 1~GWp in 2023~\cite{lcec2025}, but much of this capacity was added without system-level planning. Lebanese studies show that PV paired with storage can sharply reduce diesel dependence when the system is designed around the actual load~\cite{chedid2020,tarnini2023}.
+
+Faqra Club offers a demanding test of that conclusion. Located in Kfardebian, Keserwan, between 1,735 and 1,975~m above sea level, the club operates four ski lifts with a combined capacity of 3,150 persons per hour~\cite{skiresort}, a hotel with 20 rooms and 5 suites, a swimming pool, three restaurants, sports facilities, a water treatment plant, and 20~km of private roads~\cite{faqraabout}, alongside private chalets (Fig.~\ref{fig:site}). Demand is strongly seasonal and concentrated on weekends and holidays. The central difficulty is timing: the ski load peaks in winter, when solar output is lowest, while lighting and hospitality loads continue through the night.
+
+\subsection{Purpose and Scope}
+This paper determines whether a PV--BESS micro-grid, with the existing diesel generators retained as backup, can supply Faqra Club at a lower life-cycle cost than its current grid and diesel supply while serving the whole load. Reliability is measured by the loss of power supply probability (LPSP), the share of annual demand left unserved~\cite{yang2008}. The base case requires an LPSP of zero, and non-zero limits are tested as a sensitivity. The paper addresses four questions: (i) what the club's load is, how it varies by hour and season, and which loads are critical; (ii) which PV capacity, battery energy and battery power ratings meet the reliability target at the lowest cost, given the site's altitude, snow, and cold; (iii) how the micro-grid should be coupled and protected, and how its loads should be partitioned into priority zones; and (iv) what return the investment offers, and how the results change with diesel price, grid availability, grid export, and season.
+
+\subsection{Approach}
+The hourly load is reconstructed bottom-up from the club's facility inventory and published benchmarks, including measured ski-lift energy per skier entry~\cite{viesi2023}, and is reported as low, base, and high scenarios. Hourly irradiance and temperature for the site, scaled to long-term satellite data, drive a PV model that accounts for panel tilt and for snow cover on the modules. Component sizes and the hourly dispatch are then optimized together as a single linear program (LP) in MATLAB that minimizes annualized cost. The formulation follows the micro-grid LP used in the course and is extended, in line with~\cite{chedid2020,leon2023}, with the grid availability measured on the club's feeder, a diesel fuel-cost model, an unserved-energy variable, and a throughput-based battery degradation cost~\cite{seger2023}. The selected design is assessed over 25 years with the net present value (NPV), internal rate of return (IRR) and payback, and developed into a single-line diagram covering grid-connected, backup, and islanded operation.
+
+\subsection{Hypotheses}
+The study tests four hypotheses:
+\begin{itemize}
+    \item (H1) most of the micro-grid's savings come from displaced diesel rather than displaced grid energy;
+    \item (H2) winter is the binding season, and either battery energy or winter PV yield, rather than annual PV energy, limits the design;
+    \item (H3) steeper tilts raise winter yield through snow reflection~\cite{kahl2019}, and retaining the generators as backup is cheaper than eliminating them~\cite{chedid2020};
+    \item (H4) supplying critical loads first reduces the storage required~\cite{eissa2026}.
+\end{itemize}
+
+\subsection{Contributions and Organization}
+To the authors' knowledge, this is the first PV--BESS feasibility assessment for a Lebanese mountain resort. It combines LP-based techno-economic sizing under an unreliable grid with an electrical layout and load partitioning, in a transparent MATLAB framework that can be reused for other seasonal tourism sites. Section~II reviews the literature, Section~III describes the site and input data, Section~IV presents the optimization model, Section~V the electrical design, and Section~VI the results; Section~VII concludes.
