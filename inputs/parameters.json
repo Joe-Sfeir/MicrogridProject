@@ -153,7 +153,18 @@
    750,
    800
   ],
-  "life_yr": 15
+  "life_yr": 15,
+  "price_sweep_per_L": [
+   0.6,
+   0.8,
+   1.0,
+   1.2,
+   1.41,
+   1.6,
+   1.8,
+   2.0
+  ],
+  "breakeven_vs_edl_per_L": 1.063
  },
  "grid": {
   "edl_tariff_per_kWh": [
@@ -175,7 +186,22 @@
    102
   ],
   "mean_supply_h_per_day_measured": 9.7,
-  "export_allowed": "Law 318/2023 net metering; base: no export revenue"
+  "export_allowed": "base: no export. Sensitivities: (a) net metering, kWh credited at the EDL tariff within a 12-month bank, surplus beyond annual import forfeited; (b) export-price sweep",
+  "export": {
+   "only_when_grid_energised": true,
+   "only_from_pv": true,
+   "net_metering_credit_per_kWh": 0.27,
+   "net_metering_annual_cap": "sum export <= sum import over the year; excess forfeited",
+   "export_price_sweep_per_kWh": [
+    0.0,
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.27
+   ],
+   "sources": "Law 318/2023 (12-month banking, year-end compensation % to be set by ERA, not yet set); EDL net-metering scheme 2011 (circular 318-32: 12-month carry-over, unused credit goes to EDL); IEEE 1547-2018 anti-islanding (no export while the grid is off)"
+  }
  },
  "economics": {
   "real_discount_rate": [
@@ -189,10 +215,41 @@
    "15": 0.1106,
    "20": 0.0952,
    "25": 0.0867
+  },
+  "npv": {
+   "horizon_yr": 25,
+   "basis": "real (constant 2026 USD), unlevered, pre-tax project cash flows; financing structure unknown",
+   "battery_replacement_year": 15,
+   "battery_replacement_cost_per_kWh": [
+    125,
+    192,
+    192
+   ],
+   "salvage": "linear remaining life at the end of the horizon (PV 5/30 of capex, battery 5/15 of replacement)",
+   "pv_degradation_dispatch_years": [
+    1,
+    5,
+    10,
+    15,
+    20,
+    25
+   ],
+   "discount_rate_curve": [
+    0.0,
+    0.02,
+    0.04,
+    0.06,
+    0.0711,
+    0.08,
+    0.1,
+    0.1237,
+    0.15
+   ],
+   "exclude_degradation_cost_from_cash_flow": true
   }
  },
  "reliability": {
-  "lpsp_energy_max": 0.01,
+  "lpsp_energy_max": 0.0,
   "lpsp_sweep": [
    0,
    0.005,
@@ -201,7 +258,7 @@
    0.05
   ],
   "critical_unserved_kWh": 0,
-  "basis": "Energy-based LPSP (Borhanazad 2014 Eq. 11; Lian 2019); hard critical-load constraint (REopt, Cutler 2017)"
+  "basis": "Energy-based LPSP (Borhanazad 2014 Eq. 11; Lian 2019); hard critical-load constraint (REopt, Cutler 2017); base set to 0 (Nov 2026) because the 1% allowance was taken almost entirely during the peak ski week; 1% kept in the sweep"
  },
  "load_annual_MWh": {
   "lifts": [
