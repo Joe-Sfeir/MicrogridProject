@@ -12,18 +12,21 @@ function R = build_and_solve(s, D)
 %
 % The model is a single linear program (no integer variables), as in the
 % course example "MG Optimization Example Using LP Only". Equation numbers
-% (1) to (7) are those of docs/fable_prompt.md.
+% (1) to (7) are those of docs/fable_prompt.md; (1'), (4'), (4''), (4''') and
+% R1, R5.1 are those of docs/fable_prompt_round2.md.
 %
 % Units: kW, kWh, $, hours. Every variable is >= 0.
 %
 % Decision vector
-%   hourly (T values each):
+%   hourly (T values each, in this order: p_pv, p_cur, p_ch, p_dis, soc, p_g,
+%   p_dg, u_dg, ls_c, ls_n, p_ex):
 %     p_pv    PV power used                 p_g    grid import
 %     p_cur   PV power curtailed            p_dg   diesel output
 %     p_ch    battery charging power        u_dg   diesel committed capacity
 %     p_dis   battery discharging power     ls_c   unserved critical load
 %     soc     stored energy at the start    ls_n   unserved non-critical load
-%             of hour t (kWh)
+%             of hour t (kWh)               p_ex   PV exported to the grid
+%                                                  (0 unless s.export)
 %   scalars:
 %     P_pv (kWp), E_b (kWh), P_b (kW), P_d (kW), P_gmax (kW),
 %     x_lpsp (kWh of non-critical shedding above the LPSP limit; fixed to 0
@@ -36,9 +39,11 @@ t_build = tic;
 ser = get_series(s, D);
 L   = ser.L(:);                 % load, kW
 Lc  = ser.Lc(:);                % critical part of the load, kW
-a   = ser.a(:);                 % PV output per kWp installed, kW/kWp
+a   = ser.a(:) * s.pv_scale;    % PV output per kWp installed, kW/kWp
 ug  = ser.ug(:);                % grid availability, 0/1
 T   = numel(L);
+ski  = opt_series(ser, 'ski', T) > 0;     % ski day (logical)
+lift = opt_series(ser, 'lift', T) > 0;    % T1 chairlift running (logical)
 dt  = s.dt;
 Lnc = max(L - Lc, 0);           % non-critical part of the load, kW
 E_load = sum(L) * dt;           % kWh
@@ -55,7 +60,7 @@ kcap(ismember(ser.month(:), s.cold_months)) = s.cold_factor;
 if isempty(s.P_gmax), P_gmax = max(L); else, P_gmax = s.P_gmax; end
 
 % --------------------------------------------------------------- variables
-hv = {'p_pv', 'p_cur', 'p_ch', 'p_dis', 'soc', 'p_g', 'p_dg', 'u_dg', 'ls_c', 'ls_n'};
+hv = {'p_pv', 'p_cur', 'p_ch', 'p_dis', 'soc', 'p_g', 'p_dg', 'u_dg', 'ls_c', 'ls_n', 'p_ex'};
 ix = struct();
 for j = 1:numel(hv)
     ix.(hv{j}) = (j - 1) * T + (1:T)';
@@ -71,6 +76,7 @@ nvar = n0 + 6;
 % + CRF(i,n_b) (c_bE E_b + c_bP P_b) + O&M_b      (or the all-in $/kWh on E_b)
 % + CRF(i,n_d) c_d P_d
 % + sum_t [ c_grid p_g + c_fuel (a u_dg + b p_dg) + c_om,d p_dg + c_deg p_dis ] dt
+% - sum_t c_ex p_ex dt                             (export credit, round 2)
 k = cost_coefficients(s);
 c = zeros(nvar, 1);
 c(ix.P_pv)  = k.pv_capex + k.pv_om;
@@ -82,6 +88,7 @@ c(ix.u_dg)  = k.fuel_u * dt;
 c(ix.p_dg)  = (k.fuel_p + k.dg_om) * dt;
 c(ix.p_dis) = k.deg * dt;
 c(ix.p_ch)  = k.ch * dt;
+c(ix.p_ex)  = -k.ex * dt;
 
 % Tie-breakers. A size with zero cost (P_d when the gensets are sunk, P_b
 % with the all-in battery cost) is not determined by the LP. A negligible
@@ -106,9 +113,10 @@ f = c + tb + pen;
 next = [(2:T)'; 1];                 % cyclic: hour after T is hour 1
 ceq = new_block();
 
-% (1) power balance:  p_pv + p_dis + p_g + p_dg + ls_c + ls_n = L + p_ch
-ceq = add_rows(ceq, {ix.p_pv, ix.p_dis, ix.p_g, ix.p_dg, ix.ls_c, ix.ls_n, ix.p_ch}, ...
-                  {1, 1, 1, 1, 1, 1, -1}, L);
+% (1') power balance:  p_pv + p_dis + p_g + p_dg + ls_c + ls_n = L + p_ch + p_ex
+%      (this is (1) when there is no export: p_ex = 0)
+ceq = add_rows(ceq, {ix.p_pv, ix.p_dis, ix.p_g, ix.p_dg, ix.ls_c, ix.ls_n, ix.p_ch, ix.p_ex}, ...
+                  {1, 1, 1, 1, 1, 1, -1, -1}, L);
 
 % (2) PV:  p_pv + p_cur = a(t) P_pv
 ceq = add_rows(ceq, {ix.p_pv, ix.p_cur, ix.P_pv}, {1, 1, -a}, zeros(T, 1));
@@ -126,7 +134,9 @@ cin = new_block();
 cin = add_rows(cin, {ix.soc, ix.E_b}, {1, -(s.soc_min + kcap * (1 - s.soc_min))}, zeros(T, 1));
 
 % (3c) soc(t) >= SOC_min E_b
-cin = add_rows(cin, {ix.soc, ix.E_b}, {-1, s.soc_min}, zeros(T, 1));
+% (R5.1) T1 chairlift recovery reserve (EN 13223): in every hour in which
+%      the lift runs, soc(t) >= SOC_min E_b + E_res
+cin = add_rows(cin, {ix.soc, ix.E_b}, {-1, s.soc_min}, -s.E_res * double(lift));
 
 % (3d) p_ch(t) <= P_b      (3e) p_dis(t) <= P_b
 cin = add_rows(cin, {ix.p_ch,  ix.P_b}, {1, -1}, zeros(T, 1));
@@ -135,8 +145,20 @@ cin = add_rows(cin, {ix.p_dis, ix.P_b}, {1, -1}, zeros(T, 1));
 % (3f) P_b <= c_max E_b
 cin = add_rows(cin, {ix.P_b, ix.E_b}, {1, -s.c_max}, 0);
 
-% (4) grid:  p_g(t) <= u_g(t) P_gmax   (no export)
-cin = add_rows(cin, {ix.p_g, ix.P_gmax}, {1, -ug}, zeros(T, 1));
+% (4') grid:  p_g(t) + p_ex(t) <= u_g(t) P_gmax. Import and export share
+%      the connection, and there is no export while the feeder is off
+%      (anti-islanding). This is (4) when there is no export.
+cin = add_rows(cin, {ix.p_g, ix.p_ex, ix.P_gmax}, {1, 1, -ug}, zeros(T, 1));
+
+if s.export
+    % (4'') only PV is exported:  p_ex(t) <= p_pv(t)
+    cin = add_rows(cin, {ix.p_ex, ix.p_pv}, {1, -1}, zeros(T, 1));
+    if s.export_cap_import
+        % (4''') net metering, annual cap:  sum p_ex dt <= sum p_g dt
+        %        (credits beyond the year's import are forfeited)
+        cin = add_sum_row(cin, [ix.p_ex; ix.p_g], [dt * ones(T, 1); -dt * ones(T, 1)], 0);
+    end
+end
 
 % (5a) diesel:  p_dg(t) <= u_dg(t)
 cin = add_rows(cin, {ix.p_dg, ix.u_dg}, {1, -1}, zeros(T, 1));
@@ -173,6 +195,13 @@ else
 end
 % (6b) ls_n(t) <= non-critical load
 ub(ix.ls_n) = Lnc;
+% (R1) seasonal reliability rule: no shedding at all on ski days
+if s.no_shed_ski
+    ub(ix.ls_n(ski)) = 0;
+end
+
+% no export unless the scenario allows it
+if ~s.export, ub(ix.p_ex) = 0; end
 
 if ~s.elastic, ub(ix.x_lpsp) = 0; end
 
@@ -185,6 +214,12 @@ for j = 1:numel(fx)
     if isfield(s.fix, fx{j}) && ~isempty(s.fix.(fx{j}))
         lb(ix.(fx{j})) = s.fix.(fx{j});
         ub(ix.(fx{j})) = s.fix.(fx{j});
+    end
+end
+% Size limits, e.g. the rating of the existing diesel plant: s.cap.P_d
+for j = 1:numel(fx)
+    if isfield(s.cap, fx{j}) && ~isempty(s.cap.(fx{j}))
+        ub(ix.(fx{j})) = min(ub(ix.(fx{j})), s.cap.(fx{j}));
     end
 end
 
@@ -212,7 +247,8 @@ R.n_eq       = size(Aeq, 1);
 R.n_ineq     = size(A, 1);
 R.n_nz       = nnz(Aeq) + nnz(A);
 R.T          = T;
-R.series     = struct('L', L, 'Lc', Lc, 'a', a, 'ug', ug, 'month', ser.month(:), 'kcap', kcap);
+R.series     = struct('L', L, 'Lc', Lc, 'a', a, 'ug', ug, 'month', ser.month(:), 'kcap', kcap, ...
+                      'ski', ski, 'lift', lift);
 if ~R.ok
     return
 end
@@ -242,6 +278,8 @@ ld = D.load.(s.load_case);
 ser.L     = ld.(s.load_col);
 ser.Lc    = ld.critical_kW;     % all critical load is club load (chalets: 0%)
 ser.month = D.month;
+ser.ski   = ld.ski_day;         % 1 on ski operating days
+ser.lift  = ld.lift_T1_kW;      % T1 chairlift power, > 0 while it runs
 if isfield(D.pv, s.pv_col)
     ser.a = D.pv.(s.pv_col);
 else
@@ -252,6 +290,16 @@ if s.snow_flat_decmar > 0       % flat snow loss in Dec-Mar on a no-snow series
     ser.a(w) = ser.a(w) * (1 - s.snow_flat_decmar);
 end
 ser.ug = D.grid.(s.grid_col);
+end
+
+% =========================================================================
+function v = opt_series(ser, name, T)
+% Optional series (ski days, lift hours): zeros if the scenario has none.
+if isfield(ser, name) && ~isempty(ser.(name))
+    v = ser.(name)(:);
+else
+    v = zeros(T, 1);
+end
 end
 
 % =========================================================================

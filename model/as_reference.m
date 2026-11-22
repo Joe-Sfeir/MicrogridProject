@@ -7,7 +7,11 @@ r.name  = [s.name '_ref'];
 r.label = ['Reference for ' s.label];
 r.group = 'Reference';
 r.side  = '';
-r.fix.P_pv = 0;
-r.fix.E_b  = 0;
-r.fix.P_b  = 0;
+r.fix   = struct('P_pv', 0, 'E_b', 0, 'P_b', 0);
+r.cap   = struct();
+r.E_res = 0;            % no battery, so no battery reserve for the T1 lift:
+                        % today the recovery drive is supplied by the gensets
+r.export  = false;      % nothing to export without PV
+r.elastic = false;
+r.pv_scale = 1;
 end
