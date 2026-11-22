@@ -1,0 +1,34 @@
+{
+ "location": {
+  "latitude": 33.985,
+  "longitude": 35.811,
+  "elevation": 1726.0
+ },
+ "meteo_data": {
+  "radiation_db": "PVGIS-SARAH3",
+  "meteo_db": "ERA5",
+  "year_min": 2014,
+  "year_max": 2014,
+  "use_horizon": true,
+  "horizon_db": null,
+  "horizon_data": "DEM-calculated"
+ },
+ "mounting_system": {
+  "fixed": {
+   "slope": {
+    "value": 0,
+    "optimal": false
+   },
+   "azimuth": {
+    "value": 0,
+    "optimal": false
+   },
+   "type": "free-standing"
+  }
+ },
+ "pv_module": {
+  "technology": "c-Si",
+  "peak_power": 1.0,
+  "system_loss": 14.0
+ }
+}
