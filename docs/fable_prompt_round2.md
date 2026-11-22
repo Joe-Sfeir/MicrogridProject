@@ -1,7 +1,6 @@
 # Round 2 changes to the Faqra microgrid model
 
-Start from your reviewed code (commit `dbd2e7f` or later on `claude/ecstatic-faraday-te6tny`) once the final
-regeneration is committed. Then merge `claude/project-thread-2mmf0w`. It changes `inputs/parameters.json`
+Start from your final first-round commit (`ac991d7` on `claude/ecstatic-faraday-te6tny`). Then merge `claude/project-thread-2mmf0w`. It changes `inputs/parameters.json`
 (new keys `grid.export`, `economics.npv` and `diesel.price_sweep_per_L`, and `reliability.lpsp_energy_max` = 0)
 and adds this file. The same ground rules apply as in `docs/fable_prompt.md`: read every number from the
 inputs, keep the model a pure LP, and comment each new constraint with its number from this brief.
@@ -15,6 +14,16 @@ Joe's decisions, made after reviewing the first results:
 5. The existing generators are kept as a sunk cost (no change: `c_d` = 0, with the 750 $/kW case as a
    sensitivity).
 
+## Answers to your open questions
+
+- **Existing genset capacity.** It is not known and we will not ask the club for it. Assume the existing plant
+  can carry the reference case, that is the peak load (519 kW in the base case), and that it consists of
+  several sets. Wherever a run needs a diesel limit (weather years, PV-degradation years), use the
+  reference's P_d, and treat weather-robustness variant (b) as the main one.
+- **EDL fixed charge.** It cancels in the savings, because both cases keep the same connection. See R5.4.
+- **Renewable-share target.** There is none. Constraint 7 stays off.
+- **Grid connection at the peak, and the diesel tie-breaker.** Both confirmed.
+
 ## R1. Base case reliability: LPSP 0%
 
 - Set the base `lpsp_max` to `reliability.lpsp_energy_max` (now 0) and regenerate every run from it. Keep the
@@ -26,6 +35,10 @@ Joe's decisions, made after reviewing the first results:
 
   The finding to document is that the 1% allowance is taken almost entirely in the peak ski week, which is
   why the base case moves to 0%.
+- Explain the mechanism in `results/README.md`. Every shed kWh saves the same diesel cost, so *when* to shed is
+  a tie, and the 0.001 $/kW-yr tie-breaker on the zero-cost diesel rating settles it by shedding at the diesel
+  peaks, which are the ski-season peaks. The reference case also changes to LPSP 0%, which follows
+  automatically because it shares `lpsp_max`.
 - Add one variant, `lpsp1_offpeak`: LPSP 1%, but `ls_n(t) = 0` on every hour with `ski_day` = 1. It shows
   what a seasonal reliability rule would save.
 
@@ -118,6 +131,30 @@ the discount-rate curve and the IRR stand in for financing.
   own diesel is cheaper per kWh than EDL energy, so the model stops buying grid power. With the no-load term
   at full load, it is about 1.0 $/L. Check that the sweep shows this switch.
 
+## R5. Smaller fixes from the code review
+
+1. **T1 chairlift recovery reserve** (EN 13223:2015 §6.4; `lift_T1_recovery` in `parameters.json`). In every
+   hour with `lift_T1_kW(t) > 0`, require `soc(t) ≥ SOC_min·E_b + E_res` (base `E_res` = 30 kWh). The
+   reserve is small next to the battery, but it closes an item listed under "Not in the model". Report the
+   cost change.
+2. **Diesel unit size.** The committed-capacity relaxation gives `u_dg = p_dg` in every hour. In effect it
+   treats the plant as many small sets, so the 30% minimum load never binds (57 base-case hours are below 30%
+   of the full rating). Keep the LP as it is. Add a post-processing check: the number of diesel hours that
+   one, two or three equal sets totalling P_d could not cover at ≥ 30% load each. State in the README that
+   the existing plant is assumed to be several sets. Note that running diesel at full-load efficiency
+   favours the reference more than the microgrid, because the reference burns six times more diesel, so the
+   reported savings are conservative.
+3. **Battery wear is counted twice in the annualised cost.** The calendar-life CRF on E_b and the
+   0.020 $/kWh throughput cost both pay for battery wear. Cycle life is not the binding limit: 218 cycles/yr
+   × 15 yr = 3,270 cycles, against 8,000 for the cells. Keep the term in the LP, because it stops pointless
+   cycling. In the tables, report the cost both with it (the conservative figure) and without it, and say so
+   in the README.
+4. **EDL fixed charge** (0.6 $/kVA·month). Both the reference and the microgrid keep the same connection
+   (`P_gmax` = peak), so it cancels in the savings. Say this in the README instead of listing it as not
+   modelled.
+5. **README files.** Update `results/README.md` (base case, the "Not in the model" list, the new tables). In
+   the top-level `README.md`, point to both briefs.
+
 ## Deliverables
 
 - Regenerate `results/` with the LPSP-0 base case.
@@ -131,6 +168,7 @@ the discount-rate curve and the IRR stand in for financing.
   - `fig_npv_vs_rate.png`
   - `fig_diesel_sweep.png`
 - Update `results/README.md`.
-- Keep the 48 h test passing. Add a test that checks constraints 4' and 4'' on a toy case: no export while
-  u_g = 0, and no export above PV.
+- Keep the 48 h test passing. Add toy cases for (a) constraints 4' and 4'': no export while u_g = 0 and no
+  export above PV; (b) net-metering credits capped at the year's import; (c) the T1 reserve; (d) NPV and IRR
+  computed by hand for a two-year cash flow.
 - Run in Octave as before. Joe will re-run it in MATLAB.
