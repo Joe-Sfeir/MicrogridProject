@@ -57,7 +57,8 @@
    0,
    "Marion model",
    15
-  ]
+  ],
+  "base_column_pattern": "base_t{tilt}_snow"
  },
  "battery": {
   "capex_allin_per_kWh": [
@@ -109,7 +110,13 @@
    0.02,
    0.093
   ],
-  "cold": "No charging below 0 C cell temperature; ~87% capacity at 0 C; outdoor containers rated -30 to 50 C with heating"
+  "cold": "No charging below 0 C cell temperature; ~87% capacity at 0 C; outdoor containers rated -30 to 50 C with heating",
+  "cold_capacity_factor_decmar": [
+   1.0,
+   1.0,
+   0.87
+  ],
+  "note": "Use either capex_allin_per_kWh on E_b (base) or the energy + PCS split; not both."
  },
  "diesel": {
   "price_per_L": [
@@ -133,13 +140,20 @@
    0.014
   ],
   "capex_per_kW": [
+   0,
+   0,
+   750
+  ],
+  "existing_sets_sunk_cost": true,
+  "min_load_frac": 0.3,
+  "co2_kg_per_L": 2.68,
+  "capex_note": "Base 0: existing gensets retained (sunk). 750 $/kW (low 94 - high 800 from datasheets/market) used only in the replacement sensitivity.",
+  "capex_replacement_per_kW": [
    94,
    750,
    800
   ],
-  "existing_sets_sunk_cost": true,
-  "min_load_frac": 0.3,
-  "co2_kg_per_L": 2.68
+  "life_yr": 15
  },
  "grid": {
   "edl_tariff_per_kWh": [
@@ -178,8 +192,16 @@
   }
  },
  "reliability": {
-  "lpsp_energy_basis_max": "to be set (e.g. 0.01-0.05)",
-  "critical_load_unserved": 0
+  "lpsp_energy_max": 0.01,
+  "lpsp_sweep": [
+   0,
+   0.005,
+   0.01,
+   0.02,
+   0.05
+  ],
+  "critical_unserved_kWh": 0,
+  "basis": "Energy-based LPSP (Borhanazad 2014 Eq. 11; Lian 2019); hard critical-load constraint (REopt, Cutler 2017)"
  },
  "load_annual_MWh": {
   "lifts": [
@@ -222,5 +244,14 @@
    938,
    2085
   ]
+ },
+ "lift_T1_recovery": {
+  "power_kW": 30,
+  "energy_reserve_kWh": [
+   15,
+   30,
+   45
+  ],
+  "source": "EN 13223:2015 s6.4"
  }
 }

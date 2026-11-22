@@ -36,13 +36,28 @@ high: coincident peak 1065.7 kW at Thu 01 Jan 13:00 local.
 
 Weather year 2015 (SARAH-3 year closest to the 2014-2023 mean in annual and Dec-Mar yield). `base_*` = SARAH-3 scaled monthly to Solargis (Global Solar Atlas); `low_*` = SARAH-3 unscaled; `high_t40` = PVGIS-ERA5. `_snow` columns apply the Marion (2013) snow-coverage model (pvlib coverage_nrel logic) with ERA5-Land temperature and ERA5 precipitation; `snowcov_*` is the coverage fraction. PVGIS output includes 14% system losses and temperature effects.
 
-| Tilt | Base kWh/kWp | Base with snow | Low (SARAH-3) | Base Dec-Mar | Base Dec-Mar with snow | Dec-Mar snow loss |
-|---|---|---|---|---|---|---|
-| 30 | 1544 | 1527 | 1467 | 344 | 328 | 4.6% |
-| 40 | 1512 | 1497 | 1434 | 354 | 339 | 4.0% |
-| 50 | 1446 | 1433 | 1370 | 355 | 342 | 3.8% |
-| 60 | 1348 | 1335 | 1274 | 349 | 337 | 3.5% |
+| Tilt | Base kWh/kWp | Base with snow | Low (SARAH-3) | Base Dec-Mar | Base Dec-Mar with snow | Dec-Mar snow loss (10:1) | Dec-Mar snow loss (13:1) |
+|---|---|---|---|---|---|---|---|
+| 30 | 1544 | 1527 | 1467 | 344 | 328 | 4.6% | 5.0% |
+| 40 | 1512 | 1497 | 1434 | 354 | 339 | 4.0% | 4.4% |
+| 50 | 1446 | 1433 | 1370 | 355 | 342 | 3.8% | 4.1% |
+| 60 | 1348 | 1335 | 1274 | 349 | 337 | 3.5% | 3.9% |
 | 40 (ERA5, high) | 1761 | 1736 | | | | |
+
+## Multi-year PV (`pv_per_kWp_multiyear.csv`): base irradiance with snow, kWh/kWp
+
+| Year | t30 | t40 | t50 | t60 | Dec-Mar t30 | Dec-Mar t40 | Dec-Mar t50 | Dec-Mar t60 |
+|---|---|---|---|---|---|---|---|---|
+| 2014 | 1639 | 1606 | 1537 | 1433 | 422 | 433 | 435 | 427 |
+| 2015 | 1527 | 1497 | 1433 | 1335 | 328 | 339 | 342 | 337 |
+| 2016 | 1549 | 1515 | 1446 | 1343 | 293 | 299 | 298 | 291 |
+| 2017 | 1531 | 1495 | 1424 | 1321 | 314 | 321 | 321 | 314 |
+| 2018 | 1496 | 1459 | 1391 | 1291 | 328 | 332 | 330 | 320 |
+| 2019 | 1498 | 1470 | 1408 | 1315 | 315 | 323 | 324 | 318 |
+| 2020 | 1506 | 1472 | 1405 | 1306 | 309 | 317 | 318 | 311 |
+| 2021 | 1641 | 1609 | 1541 | 1437 | 393 | 406 | 409 | 403 |
+| 2022 | 1537 | 1503 | 1434 | 1330 | 304 | 314 | 316 | 310 |
+| 2023 | 1582 | 1550 | 1482 | 1380 | 396 | 408 | 410 | 402 |
 
 ## Grid (`grid_availability.csv`), 1 = EDL supplies
 

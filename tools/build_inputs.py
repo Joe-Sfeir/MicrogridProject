@@ -328,17 +328,20 @@ def read_om(fn, col, year):
 
 Tair = read_om(os.path.join(W, "era5land_hourly_downscaled.csv"), "temperature_2m", REP_YEAR)
 PRmm = read_om(os.path.join(W, "era5_hourly.csv"), "precipitation", REP_YEAR)
+WEATHER = {"T": Tair, "P": PRmm}
 T_SNOW = 1.0         # deg C rain/snow threshold (see register)
 SNOW_RATIO = 1.0     # cm of snow per mm of water (10:1)
 
-def marion_coverage(poa, tilt):
+def marion_coverage(poa, tilt, ratio=None, wx=None):
     """pvlib.snow.coverage_nrel logic (Marion et al. 2013): returns hourly coverage fraction 0..1."""
+    ratio = SNOW_RATIO if ratio is None else ratio
+    wx = WEATHER if wx is None else wx
     cov = np.zeros(8760); c = 0.0
     slide = 0.197 * math.sin(math.radians(tilt))
     for t in range(8760):
         k = key[t]
-        ta = Tair.get(k, 5.0)
-        snowfall = PRmm.get(k, 0.0) * SNOW_RATIO if ta <= T_SNOW else 0.0
+        ta = wx["T"].get(k, 5.0)
+        snowfall = wx["P"].get(k, 0.0) * ratio if ta <= T_SNOW else 0.0
         if snowfall >= 1.0:          # threshold_snowfall = 1 cm/h
             c = 1.0
         elif ta > poa[t] / -80.0:    # can slide when T_air > POA / m, m = -80 W/m2/C
@@ -359,8 +362,9 @@ for tilt in TILTS:
     pv_cols += [f"base_t{tilt}", f"base_t{tilt}_snow", f"low_t{tilt}", f"low_t{tilt}_snow", f"snowcov_t{tilt}"]
     pv_data += [base, base_snow, low, low_snow, cov]
     win = (MON == 12) | (MON <= 3)
+    cov13 = marion_coverage(poa, tilt, ratio=1.3)
     pv_stats.append((tilt, base.sum(), base_snow.sum(), low.sum(), base[win].sum(), base_snow[win].sum(),
-                     1 - base_snow[win].sum() / base[win].sum()))
+                     1 - base_snow[win].sum() / base[win].sum(), 1 - (base * (1 - cov13))[win].sum() / base[win].sum()))
 dE = read_pvgis(os.path.join(W, "pvgis_era5_hourly_tilt40.csv"), REP_YEAR)
 hi = np.array([dE.get(k, (0, 0, 0))[0] / 1000.0 for k in key])
 poaE = np.array([dE.get(k, (0, 0, 0))[1] for k in key])
@@ -371,6 +375,25 @@ with open(os.path.join(OUT, "pv_per_kWp.csv"), "w", newline="") as f:
     for t in range(8760):
         w.writerow([t + 1, UTC[t].strftime("%Y-%m-%d %H:%M"), LOC[t].strftime("%Y-%m-%d %H:%M")]
                    + [round(float(c[t]), 4) for c in pv_data])
+
+# multi-year PV (base irradiance, with snow) for the robustness check: fixed design, re-run dispatch per year
+my_cols, my_data, my_rows = [], [], []
+for yr in range(2014, 2024):
+    wx = {"T": read_om(os.path.join(W, "era5land_hourly_downscaled.csv"), "temperature_2m", yr),
+          "P": read_om(os.path.join(W, "era5_hourly.csv"), "precipitation", yr)}
+    for tilt in TILTS:
+        d = read_pvgis(os.path.join(W, f"pvgis_hourly_tilt{tilt}.csv"), yr)
+        P = np.array([d.get(k, (0, 0, 0))[0] / 1000.0 for k in key])
+        poa = np.array([d.get(k, (0, 0, 0))[1] for k in key])
+        kmon = np.array([GSA_K[t.month - 1] for t in UTC])
+        v = P * kmon * (1 - marion_coverage(poa, tilt, wx=wx))
+        my_cols.append(f"y{yr}_t{tilt}"); my_data.append(v)
+    my_rows.append((yr, *[my_data[-4 + j].sum() for j in range(4)],
+                    *[my_data[-4 + j][(MON == 12) | (MON <= 3)].sum() for j in range(4)]))
+with open(os.path.join(OUT, "pv_per_kWp_multiyear.csv"), "w", newline="") as f:
+    w = csv.writer(f); w.writerow(["hour", "time_utc"] + my_cols)
+    for t in range(8760):
+        w.writerow([t + 1, UTC[t].strftime("%Y-%m-%d %H:%M")] + [round(float(c[t]), 4) for c in my_data])
 
 # ---------------------------------------------------------------- grid availability
 edl = {}
@@ -427,11 +450,15 @@ L += ["", "## PV (`pv_per_kWp.csv`), kW per kWp", "",
       "`high_t40` = PVGIS-ERA5. `_snow` columns apply the Marion (2013) snow-coverage model "
       "(pvlib coverage_nrel logic) with ERA5-Land temperature and ERA5 precipitation; `snowcov_*` is the coverage fraction. "
       "PVGIS output includes 14% system losses and temperature effects.", "",
-      "| Tilt | Base kWh/kWp | Base with snow | Low (SARAH-3) | Base Dec-Mar | Base Dec-Mar with snow | Dec-Mar snow loss |",
-      "|---|---|---|---|---|---|---|"]
+      "| Tilt | Base kWh/kWp | Base with snow | Low (SARAH-3) | Base Dec-Mar | Base Dec-Mar with snow | Dec-Mar snow loss (10:1) | Dec-Mar snow loss (13:1) |",
+      "|---|---|---|---|---|---|---|---|"]
 for s_ in pv_stats:
-    L.append(f"| {s_[0]} | {s_[1]:.0f} | {s_[2]:.0f} | {s_[3]:.0f} | {s_[4]:.0f} | {s_[5]:.0f} | {100*s_[6]:.1f}% |")
+    L.append(f"| {s_[0]} | {s_[1]:.0f} | {s_[2]:.0f} | {s_[3]:.0f} | {s_[4]:.0f} | {s_[5]:.0f} | {100*s_[6]:.1f}% | {100*s_[7]:.1f}% |")
 L.append(f"| 40 (ERA5, high) | {hi.sum():.0f} | {(hi*(1-covE)).sum():.0f} | | | | |")
+L += ["", "## Multi-year PV (`pv_per_kWp_multiyear.csv`): base irradiance with snow, kWh/kWp", "",
+      "| Year | t30 | t40 | t50 | t60 | Dec-Mar t30 | Dec-Mar t40 | Dec-Mar t50 | Dec-Mar t60 |", "|---|---|---|---|---|---|---|---|---|"]
+for r_ in my_rows:
+    L.append("| " + " | ".join([str(r_[0])] + [f"{x:.0f}" for x in r_[1:]]) + " |")
 L += ["", "## Grid (`grid_availability.csv`), 1 = EDL supplies", ""]
 for k, v in G.items():
     L.append(f"- `{k}`: {sum(v)} h/yr ({sum(v)/365:.1f} h/day)")
