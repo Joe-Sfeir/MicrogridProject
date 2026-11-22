@@ -1,4 +1,4 @@
-# Faqra Club microgrid: input data inventory (Phase 2)
+# Faqra Club microgrid: input data inventory (Phase 2, final)
 
 Status: **Level C, scenario-based feasibility study.** No site measurements and no contact with the club.
 Every input below comes from public data and is tagged **verified** (a source states it), **derived**
@@ -6,6 +6,18 @@ Every input below comes from public data and is tagged **verified** (a source st
 `docs/research/*.md`.
 
 Last updated 22 Nov 2026.
+
+## 0. Base-case decisions (agreed 22 Nov 2026)
+
+| Item | Base case | Sensitivities |
+|---|---|---|
+| Boundary | Club loads **plus chalets** | Club loads only |
+| Time resolution | Full year, 8,760 h, Δt = 1 h | |
+| Irradiance | PVGIS SARAH-3 hourly, **monthly GHI scaled to Solargis long-term means** (Global Solar Atlas) | SARAH-3 unscaled (low), PVGIS-ERA5 (high), 10 individual years |
+| Snow loss on PV | Marion et al. (2013) model driven by ERA5-Land temperature and ERA5 snowfall timing | 0% and 15% of Dec–Mar yield |
+| Grid availability u_g(t) | Measured EDL Faqra-feeder year, Nov 2025 – Oct 2026 | Fixed 4 / 8 / 12 h/day blocks; 72 h and 102 h outages |
+| Battery cost | 192 $/kWh all-in (2025 prices) | 125 and 334 $/kWh; 350 $/kWh (course slides) |
+| Load scenarios | Base | Low, High |
 
 ## 1. Weather and PV resource (`data/weather/`)
 
@@ -26,6 +38,15 @@ Site 33.985 N, 35.811 E (Faqra Club). Hourly series, 2014–2023 (PVGIS) and 201
 | Nov | 2.83 | 3.26 | 3.20 | 8.4 | 3.25 | 4.09 |
 | Dec | 1.94 | 2.62 | 2.50 | 4.4 | 2.25 | 3.61 |
 | **Year** | | | | | **1,449 kWh/kWp** | **1,742 kWh/kWp** |
+
+**Third source, Solargis long-term means (Global Solar Atlas v2, data to 2025, `data/weather/gsa_*`):**
+GHI in kWh/m²/day: Jan 2.20, Feb 2.94, Mar 4.36, Apr 5.83, May 7.36, Jun 8.36, Jul 8.30, Aug 7.41, Sep 6.04,
+Oct 4.38, Nov 3.05, Dec 2.22 (1,904 kWh/m²/yr). Optimum tilt 28°; PV output 1,690 kWh/kWp/yr with Solargis's
+default losses. Solargis sits between SARAH-3 and ERA5 in winter, closer to SARAH-3: it is 24% above SARAH-3 in
+January, 12% in February, 20% in March, 14% in December, and within ±4% from April to October.
+**Base-case method:** keep the SARAH-3 hourly series (it carries the real hour-to-hour weather) and multiply
+each month's irradiance by the Solargis/SARAH-3 GHI ratio (1.24, 1.12, 1.20, 1.02, 1.04, 1.04, 1.00, 1.00, 0.99,
+1.03, 1.08, 1.14 for Jan–Dec).
 
 GHI in kWh/m²/day, T in °C, PV in kWh/kWp/day (1 kWp, 14% system loss, terrain horizon on, no snow loss).
 
@@ -66,8 +87,9 @@ a coherent scenario. The coincident peak comes from the hourly build (next step)
 | Water pumping | 7 | 39 | 153 | 20 kW | Yes | 140–220 L/person/day; 120–360 m head; 0.004 kWh/m³ per m (Plappally 2012) |
 | Wastewater plant ("600 m³") | 4 | 14 | 51 | 1.6 kW | Yes (short gaps tolerable) | 0.33–0.60 kWh/m³ (Plappally 2012) |
 | Sports lights, pool, EV, security, offices | 31 | 92 | 207 | EV 64.5 kW AC; others < 20 kW | Security and IT | Datasheets; DOE pool guide; DOE EV sessions |
-| **Club total (base boundary)** | **196** | **525** | **1,365** | | **~60–90 kW (rough)** | |
-| Chalets, 350–400 (separate case) | 445 | 938 | 2,085 | 394 kW (ski Saturday evening) | No | World Bank 2009, Houri 2005; 100 occupied days (Drouet 2025) |
+| **Club loads subtotal** | **196** | **525** | **1,365** | | **~60–90 kW (rough)** | |
+| Chalets, 350–400 | 445 | 938 | 2,085 | 394 kW (ski Saturday evening) | No | World Bank 2009, Houri 2005; 100 occupied days (Drouet 2025) |
+| **Total, base boundary (with chalets)** | **641** | **1,463** | **3,450** | | | |
 
 Cross-check: Elie's two desk studies gave 0.3 / 0.6–0.9 / 1.3–1.8 GWh for the club loads; our base of 0.53 GWh
 sits at the low end of that range, mainly because our lift energy is lower (low skier traffic means short
@@ -111,14 +133,10 @@ operating hours at part load).
 | Real discount rate | 5.8% | 7.1% | 12.4% | IRENA, World Bank 2024 Lebanon PAD, UNDP 2025 |
 | CRF at 7.1%: 10 / 15 / 20 / 25 yr | 0.143 / 0.111 / 0.095 / 0.087 | | | Derived |
 
-## 7. Open decisions
+## 7. Decisions
 
-1. **Chalets:** keep them out of the base boundary and run them as a separate case (they double the energy).
-2. **Winter irradiance:** use SARAH-3 as the conservative base and ERA5 as the optimistic case, or the mean of the two.
-3. **Grid availability:** use the measured Faqra-feeder year (Nov 2025 – Oct 2026) as u_g(t) in the base case,
-   with fixed 4/8/12 h blocks and a 72 h outage as sensitivities.
-4. **Battery cost:** base 192 $/kWh all-in from current sources vs 350 $/kWh on the course slides (to confirm with the GA).
-5. **Time resolution:** full 8,760-hour year.
+All settled; see section 0. Battery cost falls over time, so 192 $/kWh is the 2025 price and the course-slide
+350 $/kWh is kept only as a sensitivity.
 
 ## 8. Known gaps
 

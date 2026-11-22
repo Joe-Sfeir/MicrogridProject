@@ -1,0 +1,226 @@
+{
+ "_note": "Scalar model parameters, low/base/high. Sources and status in docs/data_inventory.md and docs/research/*.md. Currency USD (2025-26). Energy kWh, power kW.",
+ "site": {
+  "lat": 33.985,
+  "lon": 35.811,
+  "elevation_m": 1717,
+  "timezone": "Asia/Beirut (UTC+2, UTC+3 in summer); data series are UTC"
+ },
+ "time": {
+  "hours": 8760,
+  "dt_h": 1
+ },
+ "pv": {
+  "capex_per_kWp": [
+   600,
+   750,
+   1003
+  ],
+  "om_per_kW_yr": [
+   11,
+   18,
+   22
+  ],
+  "life_yr": [
+   25,
+   30,
+   35
+  ],
+  "degradation_pct_yr": [
+   0.5,
+   0.7,
+   0.88
+  ],
+  "system_loss_pct_in_pvgis_series": 14,
+  "base_tilt_deg_candidates": [
+   30,
+   40,
+   50,
+   60
+  ],
+  "gsa_optimum_tilt_deg": 28,
+  "gsa_monthly_scale_on_sarah3": [
+   1.241,
+   1.118,
+   1.198,
+   1.022,
+   1.037,
+   1.038,
+   1.004,
+   0.995,
+   0.993,
+   1.034,
+   1.077,
+   1.142
+  ],
+  "snow_loss_dec_mar_pct": [
+   0,
+   "Marion model",
+   15
+  ]
+ },
+ "battery": {
+  "capex_allin_per_kWh": [
+   125,
+   192,
+   334
+  ],
+  "capex_course_slides_per_kWh": 350,
+  "capex_energy_per_kWh": [
+   90,
+   139,
+   241
+  ],
+  "capex_pcs_per_kW": [
+   139,
+   214,
+   372
+  ],
+  "om_pct_capex_yr": [
+   2,
+   2.5,
+   4
+  ],
+  "life_yr": [
+   10,
+   15,
+   20
+  ],
+  "cycles": [
+   3500,
+   8000,
+   10000
+  ],
+  "round_trip_eff": [
+   0.85,
+   0.9,
+   0.93
+  ],
+  "eta_ch": 0.9487,
+  "eta_dis": 0.9487,
+  "soc_min_frac": [
+   0.2,
+   0.1,
+   0.0
+  ],
+  "c_rate_max": 0.5,
+  "degradation_cost_per_kWh_discharged": [
+   0.008,
+   0.02,
+   0.093
+  ],
+  "cold": "No charging below 0 C cell temperature; ~87% capacity at 0 C; outdoor containers rated -30 to 50 C with heating"
+ },
+ "diesel": {
+  "price_per_L": [
+   0.8,
+   1.41,
+   1.52
+  ],
+  "fuel_a_L_per_h_per_kWrated": [
+   0.005,
+   0.017,
+   0.081
+  ],
+  "fuel_b_L_per_kWh": [
+   0.225,
+   0.242,
+   0.255
+  ],
+  "om_per_kWh": [
+   0.01,
+   0.0128,
+   0.014
+  ],
+  "capex_per_kW": [
+   94,
+   750,
+   800
+  ],
+  "existing_sets_sunk_cost": true,
+  "min_load_frac": 0.3,
+  "co2_kg_per_L": 2.68
+ },
+ "grid": {
+  "edl_tariff_per_kWh": [
+   0.27,
+   0.27,
+   0.37
+  ],
+  "edl_fixed_per_kVA_month": 0.6,
+  "generator_tariff_benchmark_per_kWh": 0.65,
+  "co2_kg_per_kWh": 0.7,
+  "availability_base": "data/grid/edl_faqra_feeder_hourly.csv, Nov 2025 - Oct 2026",
+  "availability_hours_per_day_scenarios": [
+   4,
+   8,
+   12
+  ],
+  "long_outage_h": [
+   72,
+   102
+  ],
+  "mean_supply_h_per_day_measured": 9.7,
+  "export_allowed": "Law 318/2023 net metering; base: no export revenue"
+ },
+ "economics": {
+  "real_discount_rate": [
+   0.0584,
+   0.0711,
+   0.1237
+  ],
+  "project_life_yr": 25,
+  "crf_at_base": {
+   "10": 0.1431,
+   "15": 0.1106,
+   "20": 0.0952,
+   "25": 0.0867
+  }
+ },
+ "reliability": {
+  "lpsp_energy_basis_max": "to be set (e.g. 0.01-0.05)",
+  "critical_load_unserved": 0
+ },
+ "load_annual_MWh": {
+  "lifts": [
+   21,
+   57,
+   120
+  ],
+  "hotel": [
+   49,
+   119,
+   233
+  ],
+  "restaurants": [
+   31,
+   111,
+   369
+  ],
+  "road_lighting": [
+   53,
+   93,
+   232
+  ],
+  "water_pumping": [
+   7,
+   39,
+   153
+  ],
+  "wastewater": [
+   4,
+   14,
+   51
+  ],
+  "sports_pool_ev_security_offices": [
+   31,
+   92,
+   207
+  ],
+  "chalets": [
+   445,
+   938,
+   2085
+  ]
+ }
+}
