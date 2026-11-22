@@ -1,0 +1,129 @@
+% Section IV -- Optimization Model
+% Draft 1 (22 Nov 2026). Follows docs/fable_prompt.md and docs/fable_prompt_round2.md and the MATLAB code in model/.
+\section{Optimization Model}
+\label{sec:model}
+
+\subsection{Overview}
+Component sizes and the hourly dispatch are optimized together as one linear program (LP), following
+the micro-grid LP of the course and the joint sizing--dispatch formulations
+of~\cite{chedid2020,leon2023}. The model covers a full year at hourly resolution
+($t=1,\dots,T$, $T=8760$, $\Delta t=1$~h), so the winter ski peak, multi-day grid outages, and seasonal
+storage needs all appear in one problem. The sizing variables are the PV capacity $P_{pv}$ (kWp), the
+battery energy and power ratings $E_b$ (kWh) and $P_b$ (kW), and the diesel capacity $P_d$ (kW). The
+hourly variables are the PV power used $p_{pv}(t)$ and curtailed $p_{cur}(t)$, battery charging
+$p_{ch}(t)$ and discharging $p_{dis}(t)$, stored energy $e(t)$, grid import $p_g(t)$, diesel output
+$P_{dg}(t)$ and committed capacity $P_{\mathrm{com}}(t)$, and unserved critical and non-critical load
+$\ell_c(t)$ and $\ell_n(t)$. All variables are non-negative and no integer variables are used.
+
+\subsection{Objective}
+The model minimizes the annualized cost of supply,
+\begin{equation}
+\begin{split}
+\min\; C = {} & \left[\mathrm{CRF}_{pv}\,c_{pv} + m_{pv}\right] P_{pv}
+ + \left[\mathrm{CRF}_{b} + \mu_b\right] c_b E_b
+ + \mathrm{CRF}_{d}\,c_d P_d \\
+ & + \sum_{t=1}^{T} \Big[ c_g\, p_g(t) + c_f F(t) + m_{d} P_{dg}(t) + c_{deg}\, p_{dis}(t) \Big]\Delta t,
+\end{split}
+\label{eq:obj}
+\end{equation}
+where $c_{pv}$, $c_b$ and $c_d$ are the capital costs, $m_{pv}$ and $\mu_b$ the fixed O\&M of PV and
+battery, $c_g$ the EDL tariff, $c_f$ the diesel price, $F(t)$ the fuel use from~\eqref{eq:fuel},
+$m_d$ the diesel O\&M, and $c_{deg}$ a throughput cost on battery discharge that represents
+wear~\cite{seger2023}. The existing generators are a sunk cost, so $c_d=0$ in the base case. Each
+component is annualized over its own life $n$ with the capital recovery factor at the real discount
+rate $i$:
+\begin{equation}
+\mathrm{CRF}(i,n) = \frac{i(1+i)^n}{(1+i)^n-1}.
+\label{eq:crf}
+\end{equation}
+
+\subsection{Constraints}
+\emph{Power balance} in every hour:
+\begin{equation}
+p_{pv}(t) + p_{dis}(t) + p_g(t) + P_{dg}(t) + \ell_c(t) + \ell_n(t) = P_L(t) + p_{ch}(t).
+\label{eq:balance}
+\end{equation}
+
+\emph{PV.} The usable and curtailed PV power add up to the available output,
+$p_{pv}(t) + p_{cur}(t) = a(t)\,P_{pv}$, with $a(t)$ from~\eqref{eq:scale} including snow losses.
+
+\emph{Battery.} The stored energy evolves as
+\begin{equation}
+e(t+1) = e(t) + \eta_{ch}\,p_{ch}(t)\Delta t - \frac{p_{dis}(t)\Delta t}{\eta_{dis}},
+\qquad e(T+1)=e(1),
+\label{eq:soc}
+\end{equation}
+with $\eta_{ch}=\eta_{dis}=0.9487$ (90\% round trip). The cyclic condition prevents the year from
+ending on stored energy it did not produce. The limits are
+$\mathrm{SOC}_{\min}E_b \le e(t) \le E_b$, $p_{ch}(t),\,p_{dis}(t) \le P_b$, and $P_b \le 0.5\,E_b$.
+
+\emph{Grid.} Import is possible only when the feeder is energized:
+\begin{equation}
+p_g(t) \le u_g(t)\,P_{g,\max},
+\label{eq:grid}
+\end{equation}
+where $u_g(t)\in\{0,1\}$ is the measured availability of Section~III and $P_{g,\max}$ the connection
+capacity, set to the peak load. No energy is exported in the base case.
+
+\emph{Diesel.} Unit commitment normally needs binary variables. The model uses the committed-capacity
+relaxation instead, in which $P_{\mathrm{com}}(t)$ is the capacity of the sets running in hour $t$:
+\begin{equation}
+0.3\,P_{\mathrm{com}}(t) \le P_{dg}(t) \le P_{\mathrm{com}}(t) \le P_d.
+\label{eq:diesel}
+\end{equation}
+The no-load term $\alpha\,P_{\mathrm{com}}$ of~\eqref{eq:fuel} then charges fuel for every committed kW,
+which keeps part-load operation costly while the problem stays linear.
+
+\emph{Reliability.} Critical load must always be served, $\ell_c(t)=0$. Non-critical load may be shed
+only up to its hourly value, $\ell_n(t) \le P_L(t) - P_{L,c}(t)$, and within an annual
+limit on the loss of power supply probability~\cite{yang2008}:
+\begin{equation}
+\mathrm{LPSP} = \frac{\sum_t \ell_n(t)}{\sum_t P_L(t)} \le \mathrm{LPSP}_{\max}.
+\label{eq:lpsp}
+\end{equation}
+The base case uses $\mathrm{LPSP}_{\max}=0$. A first run with 1\% showed that the model takes the
+whole allowance in the busiest ski week, where shedding costs the club most, so values of 0 to 5\%
+are reported only as a sensitivity.
+
+\emph{Lift recovery reserve.} While the chairlift runs, the battery holds the energy needed to bring
+passengers back on the recovery drive, $e(t) \ge \mathrm{SOC}_{\min}E_b + E_{\mathrm{rec}}$ with
+$E_{\mathrm{rec}}=30$~kWh.
+
+\subsection{Grid Export (Sensitivity)}
+Lebanon's 2023 law on distributed renewable energy allows net metering and peer-to-peer sales, but
+the credit terms have not yet been set. Export is therefore modelled only as a sensitivity, with a
+variable $p_{ex}(t)$ added to the load side of~\eqref{eq:balance} and limited by
+\begin{equation}
+p_g(t) + p_{ex}(t) \le u_g(t)\,P_{g,\max}, \qquad p_{ex}(t) \le p_{pv}(t),
+\label{eq:export}
+\end{equation}
+so that only PV is exported and only while the feeder is energized, as anti-islanding protection
+requires. Under net metering, exported energy is credited at the EDL tariff up to the annual import,
+$\sum_t p_{ex}(t) \le \sum_t p_g(t)$; a second case sells it at a fixed price without that cap.
+
+\subsection{Economic Indicators}
+The levelized cost of energy is $\mathrm{LCOE} = C / \sum_t \left[P_L(t) - \ell_n(t)\right]\Delta t$.
+The project is also assessed over $N=25$ years with real, unlevered cash flows:
+\begin{equation}
+\mathrm{NPV} = -I_0 + \sum_{y=1}^{N} \frac{S_y - R_y}{(1+i)^y} + \frac{V_N}{(1+i)^N},
+\label{eq:npv}
+\end{equation}
+where $I_0$ is the PV and battery investment, $S_y$ the operating saving against the reference supply
+in year $y$ (computed with PV output reduced by 0.7\%/yr), $R_y$ the battery replacement in year~15,
+and $V_N$ the residual value of the equipment at the end of its life. The internal rate of return is
+the value of $i$ for which $\mathrm{NPV}=0$; because the investor and its financing are not known, the
+NPV is also reported as a function of $i$.
+
+\subsection{Scenarios and Implementation}
+The \emph{reference} case is the current supply: grid and diesel only, with $P_{pv}=E_b=P_b=0$ and the
+same load, grid availability, and reliability limit. Every micro-grid case is compared with the
+reference of the same scenario. The base case is solved for tilts of 30, 40, 50 and 60$^\circ$; the
+sensitivities change one input at a time (load scenario, irradiance, snow loss, grid availability,
+diesel price, battery and PV cost, discount rate, reliability limit, cold-weather battery derating, and
+grid export). The robustness of the chosen design is checked by fixing its sizes and re-solving the
+dispatch for each weather year from 2014 to 2023.
+
+The model is written in MATLAB and solved with \texttt{linprog} (HiGHS dual simplex). The base case has
+87,606 variables and 96,362 constraints and solves in about 6~s. It was verified against a 48-hour case
+with a hand-calculated optimum and against an independent Python implementation, which gave identical
+costs.
