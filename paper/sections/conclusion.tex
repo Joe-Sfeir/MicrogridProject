@@ -4,11 +4,13 @@
 \label{sec:conclusion}
 This study sized a PV--battery micro-grid for Faqra Club, with the existing diesel generators kept
 as backup, using an hourly linear program built on public data, a bottom-up load model and a
-measured record of feeder availability. The least-cost design combines 976~kWp of PV with a
-2,623~kWh / 786~kW battery and serves the whole load in every hour. It cuts the annualized supply cost
+measured record of feeder availability. The least-cost design combines about 1~MWp of PV with a
+2.6~MWh / 0.8~MW battery and, with the existing generators available, serves the whole load in every hour. It cuts the annualized supply cost
 by 40\%, fuel use by 83\% and CO$_2$ emissions by 691~t/yr. The investment of \$1.24M has a simple
 payback of 3.8 years, an NPV of \$2.33M and a real IRR of 25.8\%. The NPV remains positive over the
-whole range of diesel prices from 0.60 to 2.00~\$/L, and net metering would raise it further.
+whole range of diesel prices from 0.60 to 2.00~\$/L, and net metering would raise it further. With a 25\%
+allowance for grid-side works the NPV is \$1.99M; with low irradiance, cheap diesel and that
+allowance all at once, it stays positive at \$0.37M, but the IRR falls to 9.7\%.
 
 Three findings carry beyond this site. First, under an unreliable grid, PV and storage are valuable
 mainly because they displace diesel, which explains the short payback compared with resorts on reliable
@@ -16,6 +18,13 @@ grids. Second, winter sets the size of the system, and the summer surplus is eit
 once export terms are set, sold. Third, a loss-of-load allowance is a poor saving at a seasonal
 resort: an optimizer places the shedding in the peak season, where it costs the club most.
 
-The results are scenario estimates. Metered load data, the actual ratings of the existing gensets and
+The results are scenario estimates, and the zero loss of load relies on the existing generators. Metered load data, the actual ratings of the existing gensets and
 transformers, and the final net-metering terms are needed before detailed design. The open MATLAB
 model can be re-run as these data become available and reused for other seasonal tourism sites.
+
+\section*{Data and Code Availability}
+The model code, the input series and the assumption register are available at
+\url{https://github.com/Joe-Sfeir/MicrogridProject}. Irradiance and temperature come from PVGIS
+(\url{https://joint-research-centre.ec.europa.eu/pvgis}), the long-term irradiance means from the
+Global Solar Atlas (\url{https://globalsolaratlas.info}), and the feeder supply hours from the EDL
+daily feeding schedule (\url{https://edl.gov.lb/feeding.php}).

@@ -6,14 +6,16 @@
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figs/sld_paper.pdf}
-\caption{Single-line diagram of the base-case design. New equipment is drawn in blue and existing or
+\caption{Conceptual single-line diagram of the base-case design. New equipment is drawn in blue and existing or
 assumed equipment in grey; breakers marked C are controlled by the micro-grid controller, and those
 marked ``shed'' open in priority order during long outages. Ratings of existing equipment are assumed.}
 \label{fig:sld}
 \end{figure*}
 
 \subsection{Coupling Architecture and Inverter Sizing}
-Fig.~\ref{fig:sld} shows the proposed layout. The PV array, the battery and the existing diesel
+Fig.~\ref{fig:sld} shows the proposed layout. It is a conceptual architecture: fault levels,
+protection selectivity, black start and the transient response to ski-lift motor starts need detailed
+studies that an hourly energy model cannot provide. The PV array, the battery and the existing diesel
 sets are AC-coupled on a new 400~V generation bus, which connects to the club's 20~kV switchgear
 through a new feeder and a 1,000~kVA, 20/0.4~kV transformer. AC coupling lets the existing gensets
 synchronize with the battery without modification and keeps each source on its own converter.

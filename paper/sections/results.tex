@@ -9,7 +9,10 @@
 Table~\ref{tab:base} compares the optimal micro-grid with the reference supply. The optimum combines
 976~kWp of PV, tilted at 30$^\circ$, with a 2,623~kWh / 786~kW battery, and uses at most 354~kW of the
 existing diesel plant. Of the four tilts studied, 30$^\circ$ is the cheapest; 40$^\circ$ costs 0.06\%
-more. PV supplies 72.6\% of the load, and all load is served in every hour. The annualized cost falls
+more. PV supplies 72.6\% of the load, and, with the existing diesel sets available, all load is
+served in every hour. These sizes are scenario results rather than a unique optimum: across the
+irradiance, snow and tilt cases the optimum stays within 950--1,090~kWp and 2,450--2,720~kWh, so a
+practical design is about 1~MWp of PV with 2.5~MWh of storage. The annualized cost falls
 by \$199,031/yr (39.9\%) and the LCOE from 0.342 to 0.206~\$/kWh. Battery wear is counted twice, once
 in the 15-year capital recovery and again in the 0.020~\$/kWh throughput cost~\cite{seger2023}.
 Without the throughput cost the saving is 42.2\%, so the figures reported are conservative. At 217
@@ -62,9 +65,22 @@ against a 519~kW peak. Each shed kWh saves the same diesel cost whatever the hou
 tie in cost, which the model resolves at the diesel peaks, and those are the ski peaks. The whole
 allowance is worth only \$5,508/yr. The PV and battery sizes are the same for every limit from 0 to
 5\%; shedding only reduces the diesel capacity used, and the generators already exist. The base case
-therefore allows no shedding. The design was also re-run with the weather of each year from 2014 to
-2023. With the existing diesel plant, all load is served in every year, and the cost is at most 4\%
-above the design year.
+therefore allows no shedding.
+
+This result also exposes a weakness of the LPSP as a design metric for a seasonal resort. An annual
+energy share counts a kWh shed on a quiet weekday in May the same as one shed on a busy Saturday in
+January, so a 1\% limit, which sounds strict, lets the optimizer concentrate the whole loss in the
+week that matters most. Forbidding shedding on ski days gives the same \$5,508/yr saving and moves
+all shedding off the ski days. For resorts with a sharp peak season, a seasonal rule of this kind, or
+a value of lost load that follows revenue, is a better reliability criterion than an annual LPSP.
+
+The zero LPSP depends on the existing diesel plant being available. With the base-case PV and battery
+fixed and half of the diesel plant out for the whole year, 4.3~MWh (0.29\% of the load) goes unserved
+in 35 hours, all on ski days, with up to 234~kW short. With no diesel at all, 11.5\% of the load goes
+unserved in 788 hours. In both cases the PV, the battery and the grid still serve the critical load in
+every hour. The design was also re-run with the weather of each year from 2014 to 2023. With the
+existing diesel plant, all load is served in every year, and the cost is at most 4\% above the design
+year.
 
 \subsection{Economic Assessment}
 The investment is \$1.235M, of which \$732k is PV and \$504k is the battery; the diesel plant is
@@ -78,6 +94,50 @@ shorter than the 8 and 11 years reported for PV at ski resorts with reliable
 grids~\cite{scuderi2025,lewicki2024}, where PV displaces grid energy. At Faqra the PV and battery
 mainly displace diesel energy costing about 0.38~\$/kWh, and 86\% of the operating saving comes from
 fuel and diesel maintenance.
+
+\emph{Installed cost.} The PV and battery prices are installed-cost benchmarks that include the
+inverters, the battery converters and installation (Table~\ref{tab:param}), but not the grid-side works
+of Fig.~\ref{fig:sld}: the 1,000~kVA transformer, the 20~kV breaker and intertie relay, the controller,
+MV cabling and engineering. Table~\ref{tab:capex} adds them as a 25\% allowance on the PV and battery
+cost. The investment then rises to \$1.54M, and the NPV falls to \$1.99M, with an IRR of 20.1\% and
+simple and discounted paybacks of 4.8 and 6.1 years. Battery O\&M is a share of the capital cost, so it
+rises as well.
+
+\begin{table}[!t]
+\centering
+\caption{Investment of the Base-Case Design}
+\label{tab:capex}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l r@{}}
+\toprule
+Item & k\$ \\
+\midrule
+PV, 976~kWp at 750~\$/kWp (modules, inverters, installation) & 732 \\
+Battery, 2,623~kWh at 192~\$/kWh (cells, converters, containers) & 504 \\
+\midrule
+Benchmark investment & 1,235 \\
+Grid-side works and engineering, 25\% allowance & 309 \\
+Investment with allowance & 1,544 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Combined downside.} The sensitivities change one input at a time. To test the chosen design
+against several adverse inputs at once, its sizes were fixed and the year was re-run with the low
+irradiance series, a diesel price of 0.80~\$/L and the 25\% cost allowance. The annual saving falls to
+\$27k (8.4\%), but the NPV stays positive at \$0.37M, with an IRR of 9.7\% and a discounted payback of
+14 years. The design therefore still pays at the base discount rate, but not at 12.4\%. Re-optimized
+for the same inputs, the system shrinks to 622~kWp and 1,132~kWh, with an NPV of \$0.61M and an IRR of
+14.6\%. The investment is robust to any single adverse input. If cheap diesel and high costs were
+expected together, a smaller first phase would be the better choice.
+
+\emph{Supply boundary.} The chalets account for 64\% of the base load. Whether they are supplied
+through the club's network, and whether the club pays for their energy and recovers it from the
+owners, could not be verified from public sources. The base case assumes that the club supplies the
+chalets and keeps the savings. If the boundary is the club's own facilities only, the optimum is
+368~kWp and 955~kWh, the investment is \$459k, the saving is 43.8\%, and the NPV is \$0.93M, with an
+IRR of 26.9\%. The project is therefore attractive under either boundary.
 
 \begin{figure}[!t]
 \centering
@@ -117,5 +177,7 @@ with the irradiance used 30$^\circ$ is the cheapest tilt. H4 is not supported: s
 first, by allowing non-critical shedding, does not reduce the storage.
 
 \emph{Limitations.} The load is reconstructed rather than metered, and only public data are used. The
-diesel runs at full-load efficiency in the model, which favours the reference, because it burns 5.8
-times more fuel. Taxes, inflation and financing are not modelled.
+diesel plant is modelled as continuously adjustable committed capacity rather than discrete sets, so
+minimum-load and start-up limits are not enforced; it runs at full-load efficiency, which favours the
+reference, because it burns 5.8 times more fuel. A mixed-integer unit-commitment model would be
+needed to check the dispatch of the actual sets. Taxes, inflation and financing are not modelled.
