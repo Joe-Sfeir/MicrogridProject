@@ -1,0 +1,7 @@
+name,label,lpsp_achieved_pct,shed_MWh,shed_hours,largest_shed_kW,largest_shed_time_local,share_on_ski_days_pct,share_dec_mar_pct,share_in_worst_7_days_pct,worst_7_days_start_local,diesel_kW,diesel_MWh,cost_USD_yr,cost_saving_vs_base_USD_yr,savings_vs_reference_pct
+base_t30,Base case; tilt 30,0.000,0.00,0,0.0,,,,,,354.3,167.5,299859,0,39.9
+lpsp_0p5,LPSP 0.5%,0.500,7.29,61,226.3,2026-01-03 20:00,96.0,100.0,64.0,2026-01-05 00:00,267.6,160.3,297105,2754,40.1
+lpsp_1,LPSP 1%,1.000,14.57,114,266.0,2026-01-11 13:00,92.1,100.0,48.2,2026-01-05 00:00,233.4,153.0,294351,5508,40.3
+lpsp_2,LPSP 2%,2.000,29.14,170,312.8,2026-01-11 13:00,91.6,100.0,36.5,2026-01-05 00:00,186.6,138.4,288843,11016,40.8
+lpsp_5,LPSP 5%,5.000,72.86,353,417.2,2026-01-10 12:00,88.5,99.3,27.4,2026-01-05 07:00,93.7,94.7,272320,27539,42.2
+lpsp1_offpeak,LPSP 1%; none on ski days,1.000,14.57,97,452.9,2026-03-21 20:00,0.0,47.0,22.3,2026-03-24 07:00,354.3,153.0,294351,5508,40.3
