@@ -1,6 +1,6 @@
 """Single-line diagram of the Faqra Club PV-BESS microgrid (SVG, PNG, PDF).
 
-Design basis: base-case sizes from results/ (983 kWp PV, 2,622 kWh / 790 kW BESS, 519 kW peak), the
+Design basis: base-case sizes from results/ (976 kWp PV, 2,623 kWh / 786 kW BESS, 519 kW peak), the
 existing diesel sets, islanding at the 20 kV point of common coupling, and a split of the club loads
 into an essential (critical) and a sheddable part. New equipment is drawn in blue, existing or
 assumed-existing equipment in grey. Run:  python3 tools/make_sld.py
@@ -181,7 +181,7 @@ line(XPV, 690, XPV, 740, NEW)
 add(f'<rect x="{XPV - 6}" y="{712}" width="12" height="12" fill="white" stroke="{NEW}" stroke-width="2"/>')
 text(XPV + 12, 722, "DC isolators, string fuses, SPD type 2", 10.5, NEW)
 pv(XPV, 765, "", NEW)
-text(XPV - 66, 806, "PV array 983 kWp DC (about 1,790 x 550 Wp)\ntilt 30 deg, south; DC/AC 1.23\nraised >= 1.2 m above ground (snow)", 10.5, NEW)
+text(XPV - 66, 806, "PV array 976 kWp DC (about 1,775 x 550 Wp)\ntilt 30 deg, south; DC/AC 1.22\nraised >= 1.2 m above ground (snow)", 10.5, NEW)
 
 # BESS branch
 XB = 430
@@ -191,7 +191,7 @@ inverter(XB, 600, "PCS  2 x 400 kVA\nbidirectional, grid-forming\n(master in isl
 line(XB, 622, XB, 700, NEW)
 add(f'<rect x="{XB - 6}" y="{650}" width="12" height="12" fill="white" stroke="{NEW}" stroke-width="2"/>')
 text(XB + 12, 660, "DC breakers, BMS", 10.5, NEW)
-battery(XB, 728, "LFP battery 2,622 kWh\n2 containers, heated\n10-100% SOC, 0.5C\nIEC 62619, NFPA 855", NEW)
+battery(XB, 728, "LFP battery 2,623 kWh\n2 containers, heated\n10-100% SOC, 0.5C\nIEC 62619, NFPA 855", NEW)
 
 # Diesel branch
 XD = 650
@@ -310,7 +310,7 @@ tag(75, yy)
 text(112, yy + 4, "device controlled by the MGC (fibre / Modbus-TCP)", 11.5)
 
 box(570, 915, 590, 290, MUTED, "Design notes",
-    ["1. Sizes from the LP base case: PV 983 kWp, BESS 2,622 kWh / 790 kW,",
+    ["1. Sizes from the LP base case: PV 976 kWp, BESS 2,623 kWh / 786 kW,",
      "   peak load 519 kW, EDL import limited to the peak (519 kW).",
      "2. Islanding at 20 kV, so the whole club network (lifts, chalets) can be",
      "   supplied in island mode; the battery PCS is the grid-forming source.",

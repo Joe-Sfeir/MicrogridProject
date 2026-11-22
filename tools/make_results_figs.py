@@ -67,7 +67,7 @@ def week(start, end):
 
 weeks = [("(a) Ski season, Fri 2 to Thu 8 January", "2026-01-02", "2026-01-09"),
          ("(b) Summer, Mon 3 to Sun 9 August", "2026-08-03", "2026-08-10")]
-fig, axes = plt.subplots(2, 1, figsize=(W1, 3.9), sharey=True)
+fig, axes = plt.subplots(2, 1, figsize=(W1, 3.3), sharey=True)
 for ax, (title, a, b) in zip(axes, weeks):
     idx = week(a, b)
     x = np.arange(len(idx) + 1)
@@ -209,6 +209,44 @@ ax.legend(loc="center right", handlelength=1.5)
 panel_label(ax, "(b) Energy bought in the re-optimized system")
 fig.subplots_adjust(hspace=0.35)
 save(fig, "res_diesel_sweep")
+
+
+# ------------------------------------------------------------ compact economics figure for the paper
+fig, axes = plt.subplots(2, 1, figsize=(W1, 3.4))
+ax = axes[0]
+ax.bar(yr, disc, 0.7, color=C[0], alpha=0.35, lw=0, label="Yearly, discounted")
+ax.plot(yr, cum, color=C[0], lw=1.6, marker="o", ms=2.5, label="Cumulative, discounted")
+ax.axhline(0, color=INK2, lw=0.5)
+ax.annotate(f"payback {pb:.1f} yr", (pb, 0), xytext=(pb + 1.5, -0.8), fontsize=7, color=INK2,
+            arrowprops=dict(arrowstyle="-", color=INK2, lw=0.5))
+ax.annotate("battery replaced", (15, disc[15]), xytext=(15, 0.75), ha="center", fontsize=7, color=INK2,
+            arrowprops=dict(arrowstyle="-", color=INK2, lw=0.5))
+ax.text(25, cum[-1] + 0.15, f"NPV {cum[-1]:.2f} M\\$", ha="right", va="bottom", fontsize=7, color=INK)
+ax.set_xlim(-0.8, 25.8)
+ax.set_ylim(-1.5, 3.0)
+ax.set_xlabel("Project year")
+ax.set_ylabel("Million \\$")
+ax.legend(loc="upper left", handlelength=1.5, borderaxespad=0.2)
+ax.grid(axis="x", visible=False)
+panel_label(ax, "(a) Base-case cash flow at 7.11% real discount rate")
+ax = axes[1]
+ax.axvspan(0.80, 1.52, color=SHADE, lw=0)
+ax.grid(axis="x", visible=False)
+v = col(S, "npv_USD") / 1e6
+ax.plot(p, v, color=C[0], lw=1.6, marker="o", ms=3)
+ax.plot(p[ib], v[ib], "o", color=C[0], ms=5.5, mec=INK, mew=0.8)
+for i in (0, ib, len(p) - 1):
+    ax.annotate(f"IRR {float(S[i]['irr_pct']):.0f}%", (p[i], v[i]), xytext=(6, -9),
+                textcoords="offset points", ha="left", fontsize=7, color=INK2)
+ax.set_xlim(0.52, 2.2)
+ax.set_ylim(-0.4, 4.2)
+ax.set_xticks([0.6, 0.8, 1.0, 1.2, 1.41, 1.6, 1.8, 2.0])
+ax.text(1.16, 3.85, "observed 2023\u20132026", ha="center", fontsize=7, color=INK2)
+ax.set_xlabel("Diesel price (\\$/L)")
+ax.set_ylabel("NPV (million \\$)")
+panel_label(ax, "(b) NPV with sizes re-optimized at each diesel price")
+fig.subplots_adjust(hspace=0.62)
+save(fig, "res_economics")
 
 # ------------------------------------------------------------ tornado on the saving
 T = read("table_sensitivities.csv")
