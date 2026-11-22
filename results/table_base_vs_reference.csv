@@ -30,7 +30,7 @@ fuel_L,249173,39410
 bess_discharge_MWh,0.0,570.3
 bess_cycles_per_yr,0.0,217.5
 renewable_fraction_pct,0.0,72.7
-non_grid_diesel_share_pct,-0.0,69.1
+non_grid_diesel_share_pct,0.0,69.1
 lpsp_pct,1.000,1.000
 unserved_noncritical_kWh,14571.2,14571.2
 unserved_critical_kWh,0.0,0.0
@@ -41,7 +41,7 @@ co2_t,1004.1,311.4
 co2_saved_t,,692.7
 diesel_hours,5800,841
 diesel_hours_below_30pct,2538,57
-check_balance_kW,0.0e+00,0.0e+00
+check_balance_kW,0.0e+00,2.3e-13
 check_soc_kWh,0.0e+00,3.9e-12
 check_simultaneous_kW,0.0e+00,0.0e+00
 check_diesel_while_curtail_h,0,0

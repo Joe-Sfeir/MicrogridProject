@@ -199,9 +199,8 @@ if ischar(v)
 elseif isnan(v)
     str = '';
 else
-    v = double(v) * sprow{3};
-    if abs(v) < 1e-12, v = 0; end             % no "-0.0"
-    str = sprintf(sprow{4}, v);
+    str = sprintf(sprow{4}, double(v) * sprow{3});
+    if ~isempty(regexp(str, '^-0(\.0+)?$', 'once')), str = str(2:end); end    % no "-0.0"
 end
 end
 
