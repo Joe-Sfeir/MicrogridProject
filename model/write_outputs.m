@@ -199,7 +199,9 @@ if ischar(v)
 elseif isnan(v)
     str = '';
 else
-    str = sprintf(sprow{4}, double(v) * sprow{3});
+    v = double(v) * sprow{3};
+    if abs(v) < 1e-12, v = 0; end             % no "-0.0"
+    str = sprintf(sprow{4}, v);
 end
 end
 
@@ -253,10 +255,10 @@ p('battery degradation %s, diesel capex %s, fuel %s, diesel O&M %s, grid energy 
   commas(B.c_b_deg), commas(B.c_d_capex), commas(B.c_fuel), commas(B.c_dg_om), commas(B.c_grid));
 
 p(['The %g%% of load that may be shed is non-critical load only. The model uses the allowance in ' ...
-   'the hours that set the diesel rating: %.0f%% of the shed energy falls in December to March, in %d ' ...
-   'hours, most of it in the weeks of highest load and lowest PV output (see ' ...
-   '`fig_dispatch_winter_week.png`). With LPSP 0%% nothing is shed; the `lpsp_0` sensitivity gives the ' ...
-   'cost and the diesel rating of that design.\n\n'], 100 * s.lpsp_max, 100 * B.uns_winter_frac, B.uns_hours);
+   'the hours that set the diesel rating: load is shed in %d hours, up to %.0f kW at a time, and %.0f%% ' ...
+   'of the shed energy falls in December to March (`fig_dispatch_winter_week.png` shows some of these ' ...
+   'hours). With LPSP 0%% nothing is shed; the `lpsp_0` sensitivity gives the cost and the diesel rating ' ...
+   'of that design.\n\n'], 100 * s.lpsp_max, B.uns_hours, B.uns_max_kW, 100 * B.uns_winter_frac);
 
 % ---------------------------------------------------------------- tilt
 p('## PV tilt\n\n');
@@ -341,6 +343,13 @@ p(['- Base case LP: %s variables, %s equality and %s inequality constraints, %s 
 p('- Power balance residual: at most %.1e kW in any hour.\n', B.chk_balance);
 p('- Battery energy balance and cyclic condition: residual at most %.1e kWh.\n', B.chk_soc);
 p('- Simultaneous charge and discharge: %d hours (largest overlap %.1e kW).\n', B.chk_simul_h, B.chk_simul_kW);
+if full
+    jd = find(abs([S.Kwx.E_pv_avail] - B.E_pv_avail) < 1e-6 * B.E_pv_avail, 1);
+    if ~isempty(jd)
+        p(['- Dispatch-only run with the design weather year (%d) and the base-case sizes gives the ' ...
+           'base-case cost again (difference %.2f $/yr).\n'], S.years(jd), abs(S.Kwx(jd).cost - B.cost));
+    end
+end
 p(['- Diesel: runs %d hours. Hours with diesel while PV is curtailed: %d; while the grid has spare ' ...
    'capacity: %d; while the battery charges: %d.\n'], B.dg_hours, B.chk_dg_curt_h, B.chk_dg_grid_h, ...
    B.chk_dg_charge_h);

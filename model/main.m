@@ -1,7 +1,7 @@
 function S = main(mode)
 %MAIN  Run the Faqra Club microgrid study and write the results/ folder.
 %
-%   main            full study (about 80 LPs, 10 to 15 minutes)
+%   main            full study (about 80 LPs; 5 to 10 minutes with HiGHS)
 %   main('quick')   input checks, 48-h test, reference and base case at the
 %                   four tilts, with figures (about 1 minute)
 %   S = main(...)   also returns all results in one struct

@@ -57,14 +57,14 @@ Ewe  = Eday(sat) + Eday(sat + 1);
 
 is_ski = ski(sat) > 0 | ski(sat + 1) > 0;
 [~, j] = max(Ewe .* is_ski);
-w_win = window(day, nday, sat(j));
+w_win = week_window(day, nday, sat(j));
 
 is_sum = ismember(mon(sat), [6 7 8]);
 [~, j] = max(Ewe .* is_sum);
-w_sum = window(day, nday, sat(j));
+w_sum = week_window(day, nday, sat(j));
 end
 
-function w = window(day, nday, d_sat)
+function w = week_window(day, nday, d_sat)
 d1 = d_sat - 2;                                          % Thursday
 d1 = min(max(d1, 1), nday - 6);
 w  = find(day >= d1 & day <= d1 + 6);
