@@ -310,5 +310,20 @@
    45
   ],
   "source": "EN 13223:2015 s6.4"
+ },
+ "review": {
+  "note": "Round 3 runs added after the external review of the draft paper (22 Nov 2026).",
+  "installed_cost_factor": 1.25,
+  "installed_cost_basis": "Stress test, not an estimate: the PV (750 $/kWp) and battery (192 $/kWh all-in) benchmarks are installed costs that include inverters, battery converters and installation, but not the grid-side works of the single-line diagram (20/0.4 kV 1,000 kVA transformer, 20 kV breaker and intertie relay, micro-grid controller, MV cabling, engineering). +25% on the PV and battery capex covers them with margin.",
+  "downside": {
+   "pv_series": "low",
+   "diesel_price_per_L": 0.80,
+   "installed_cost_factor": 1.25,
+   "basis": "All adverse inputs at once: the lowest irradiance series (PVGIS-SARAH-3 unscaled), the low end of the observed Lebanese diesel price (2023-2026), and the +25% installed cost. Run twice: base-case sizes fixed (is the chosen design still worth building?) and sizes re-optimized."
+  },
+  "genset_outage": {
+   "available_fraction": [0.5, 0.0],
+   "basis": "Base-case PV and battery fixed, dispatch over the design year with the diesel limited to a share of the existing plant (the reference rating): 0.5 = one of two equal sets out for the whole year; 0 = no diesel at all (PV, battery and grid only). Load may be shed at a penalty, so the runs report how much would go unserved."
+  }
  }
 }

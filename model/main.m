@@ -18,7 +18,9 @@ function S = main(mode)
 %      payback for the base case and selected runs
 %   7. weather robustness: base-case sizes fixed, dispatch only, 2014-2023
 %   8. cross-check against tools/prototype_lp.py
-%   9. tables (CSV), figures (PNG) and README.md in results/
+%   9. review runs (round 3): installed cost +25 %, combined downside,
+%      genset outage; written to results/table_review.csv
+%  10. tables (CSV), figures (PNG) and README.md in results/
 %
 % The briefs are docs/fable_prompt.md and docs/fable_prompt_round2.md.
 %
@@ -107,7 +109,7 @@ end
 fprintf('\n== Finance: dispatch with degraded PV, NPV, IRR, payback ==\n');
 [S.fin, S.Kdeg, cache] = run_finance(base, S.Kbase, D, cache, [], []);
 if ~quick
-    names = {'batt_125', 'batt_350', 'irr_low', 'export_nm', 'grid_none', 'diesel_capex'};
+    names = {'batt_125', 'batt_350', 'irr_low', 'export_nm', 'grid_none', 'diesel_capex', 'club_only'};
     names = [names, {sens(strcmp({sens.group}, 'Grid export') & ~strcmp({sens.name}, 'export_nm')).name}];
     for j = 1:numel(names)
         q = find(strcmp({sens.name}, names{j}), 1);
@@ -154,10 +156,15 @@ if ~quick
 
     % -------------------------------------- 8. cross-check, prototype
     fprintf('\n== Cross-check against tools/prototype_lp.py ==\n');
-    [S.cross, cache] = crosscheck(D, cache, S.Kbase); %#ok<ASGLU>
+    [S.cross, cache] = crosscheck(D, cache, S.Kbase);
+
+    % ------------------------------------- 9. review runs (round 3)
+    fprintf('\n== Review runs (round 3) ==\n');
+    [S.review, cache] = review_runs(D, cache, base, S.Kbase, S.Kref, best_tilt); %#ok<ASGLU>
+    write_review(outdir, S.review);
 end
 
-% --------------------------------------------------------------- 9. output
+% -------------------------------------------------------------- 10. output
 S.info = struct();
 S.info.date = datestr(now, 'yyyy-mm-dd HH:MM');
 if exist('OCTAVE_VERSION', 'builtin') ~= 0
@@ -315,4 +322,105 @@ q.E_res = D.par.lift_T1_recovery.energy_reserve_kWh(2);  q.name = 'gap_5_reserve
 [K, ~, cache] = run_one(q, D, cache, 'crosscheck');
 X.steps(end + 1) = struct('label', 'T1 lift recovery reserve in the battery', 'K', K);
 X.steps(end + 1) = struct('label', sprintf('Cheapest tilt (%s) = base case', Kbase.name), 'K', Kbase);
+end
+
+% =========================================================================
+function [V, cache] = review_runs(D, cache, base, Kbase, Kref, tilt)
+% Runs added after the external review of the draft paper (parameters.json,
+% key "review"):
+%   capex_plus25       base design, PV and battery capex x 1.25 (grid-side
+%                      works not in the benchmarks); finance only changes
+%   downside_fixed     base design under all adverse inputs at once: low
+%                      irradiance, low diesel price, capex x 1.25
+%   downside_reopt     the same inputs, sizes re-optimized
+%   genset_<p>pct      base design, diesel limited to p % of the existing
+%                      plant for the whole year; load may be shed at a penalty
+Rv  = D.par.review;
+fix = struct('P_pv', Kbase.P_pv, 'E_b', Kbase.E_b, 'P_b', Kbase.P_b);
+V = struct();
+V.K = [];  V.fin = [];  V.cap_kW = [];
+
+% installed cost +25 %, base design
+f = Rv.installed_cost_factor;
+a = scale_capex(base, f);
+a.name  = sprintf('capex_plus%d', round(100 * (f - 1)));
+a.label = sprintf('Installed cost +%d%%, base design', round(100 * (f - 1)));
+a.group = 'Review';
+a.fix = fix;  a.cap = struct('P_d', Kref.P_d);  a.elastic = true;
+[V, cache] = add_review(V, a, D, cache, true, Kref.P_d);
+
+% combined downside: base design, then re-optimized
+dn = Rv.downside;
+b = scale_capex(base, dn.installed_cost_factor);
+b.pv_col       = sprintf('%s_t%d_snow', dn.pv_series, tilt);
+b.price_diesel = dn.diesel_price_per_L;
+b.group = 'Review';
+b.name  = 'downside_fixed';
+b.label = sprintf('Combined downside (%s irradiance, %.2f $/L, capex +%d%%), base design', ...
+                  dn.pv_series, dn.diesel_price_per_L, round(100 * (dn.installed_cost_factor - 1)));
+b.fix = fix;  b.cap = struct('P_d', Kref.P_d);  b.elastic = true;
+[V, cache] = add_review(V, b, D, cache, true, Kref.P_d);
+b.name  = 'downside_reopt';
+b.label = strrep(b.label, 'base design', 'sizes re-optimized');
+b.fix = struct();  b.cap = struct();  b.elastic = false;
+[V, cache] = add_review(V, b, D, cache, true, NaN);
+
+% genset outage: base design, diesel limited to a share of the existing plant
+for x = Rv.genset_outage.available_fraction(:)'
+    g = base;
+    g.name  = sprintf('genset_%dpct', round(100 * x));
+    g.label = sprintf('Diesel limited to %d%% of the existing plant, base design', round(100 * x));
+    g.group = 'Review';
+    g.fix = fix;  g.cap = struct('P_d', x * Kref.P_d);  g.elastic = true;
+    [V, cache] = add_review(V, g, D, cache, false, x * Kref.P_d);
+end
+end
+
+% =========================================================================
+function s = scale_capex(s, f)
+s.c_pv = f * s.c_pv;
+s.c_b_allin = f * s.c_b_allin;
+s.c_bE = f * s.c_bE;
+s.c_bP = f * s.c_bP;
+end
+
+% =========================================================================
+function [V, cache] = add_review(V, s, D, cache, with_finance, cap_kW)
+[K, ~, cache] = run_one(s, D, cache, 'review');
+assert(K.ok, 'main:review', 'Review run %s did not solve.', s.name);
+fprintf(['  %-22s unserved: non-critical %.1f MWh, critical %.1f kWh, %d hours, largest %.0f kW,' ...
+         ' %.0f%% on ski days\n'], '', K.E_uns_n / 1000, K.E_uns_c, K.uns_hours, ...
+        K.uns_max_kW * (K.uns_hours > 0), 100 * K.uns_ski_frac);
+F = [];
+if with_finance
+    [fin, ~, cache] = run_finance(s, K, D, cache, [], []);
+    F = fin.F;
+end
+V.K = [V.K, K];
+V.fin = [V.fin, struct('name', s.name, 'F', F)];
+V.cap_kW = [V.cap_kW, cap_kW];
+end
+
+% =========================================================================
+function write_review(outdir, V)
+% results/table_review.csv: one row per review run.
+fid = fopen(fullfile(outdir, 'table_review.csv'), 'w');
+fprintf(fid, ['name,label,pv_kWp,bess_kWh,bess_kW,diesel_limit_kW,diesel_kW_used,cost_USD_yr,' ...
+              'reference_cost_USD_yr,savings_USD_yr,savings_pct,lpsp_pct,unserved_noncritical_MWh,' ...
+              'unserved_critical_kWh,unserved_hours,largest_unserved_kW,unserved_share_ski_days_pct,' ...
+              'diesel_MWh,grid_MWh,capex_USD,npv_USD,irr_pct,payback_simple_yr,payback_discounted_yr\n']);
+for j = 1:numel(V.K)
+    K = V.K(j);  F = V.fin(j).F;
+    if isempty(F)
+        fin = ',,,,';
+    else
+        fin = sprintf('%.0f,%.0f,%.2f,%.2f,%.2f', F.capex0, F.npv, 100 * F.irr, F.payback, F.payback_disc);
+    end
+    fprintf(fid, '%s,"%s",%.1f,%.1f,%.1f,%.1f,%.1f,%.0f,%.0f,%.0f,%.1f,%.3f,%.2f,%.1f,%d,%.1f,%.1f,%.1f,%.1f,%s\n', ...
+            K.name, K.label, K.P_pv, K.E_b, K.P_b, V.cap_kW(j), K.P_d, K.cost, K.ref_cost, K.savings, ...
+            100 * K.savings_frac, 100 * K.lpsp, K.E_uns_n / 1000, K.E_uns_c, K.uns_hours, ...
+            K.uns_max_kW * (K.uns_hours > 0), 100 * K.uns_ski_frac, K.E_diesel / 1000, K.E_grid / 1000, fin);
+end
+fclose(fid);
+fprintf('  wrote %s\n', fullfile(outdir, 'table_review.csv'));
 end
