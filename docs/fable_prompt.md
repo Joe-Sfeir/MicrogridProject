@@ -103,6 +103,18 @@ model/
   tests/test_small_case.m  % 48-hour toy case with a hand-checkable answer; energy-balance and SOC checks
 ```
 
+## Cross-check against the Python prototype
+
+`tools/prototype_lp.py` (scipy/HiGHS, simplified: all-in battery cost on E_b, PV tilt 40°, grid capped at 5 MW)
+solved the base case in about 7 s. Your MATLAB base case at tilt 40° should land close to it; investigate any large gap.
+
+| Run | PV kWp | BESS kWh | Diesel kW | Annualized cost $/yr | LCOE $/kWh | Renewable fraction | Diesel MWh |
+|---|---|---|---|---|---|---|---|
+| Reference (grid + diesel) | 0 | 0 | 519 | 493,382 | 0.342 | 0% | 962 |
+| Base, LPSP 1% | 1,048 | 2,893 | 499 | 281,198 | 0.195 | 76% | 110 |
+| Base, LPSP 0% | 1,048 | 2,893 | 499 | 286,706 | 0.197 | 76% | 125 |
+| No grid at all | 1,091 | 2,941 | 519 | 307,399 | 0.213 | 77% | 387 |
+
 ## Checks before reporting
 
 - The annual sums of the loaded series match `inputs/inputs_summary.md`.
