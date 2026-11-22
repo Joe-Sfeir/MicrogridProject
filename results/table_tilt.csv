@@ -1,0 +1,5 @@
+name,group,label,pv_kWp,bess_kWh,bess_kW,diesel_kW,cost_USD_yr,lcoe_USD_kWh,reference_cost_USD_yr,savings_USD_yr,savings_pct,curtailment_pct,grid_MWh,diesel_MWh,fuel_L,bess_cycles_per_yr,renewable_fraction_pct,lpsp_pct,unserved_noncritical_kWh,unserved_critical_kWh,co2_t,co2_saved_t
+base_t30,Base,Base case; tilt 30,982.5,2621.9,789.5,233.2,294277,0.2040,493382,199105,40.4,29.4,294.0,152.2,39410,217.5,72.7,1.000,14571.2,0.0,311.4,692.7
+base_t40,Base,Base case; tilt 40,1013.5,2659.7,797.3,229.6,294428,0.2041,493382,198954,40.3,29.3,285.8,148.8,38550,218.1,73.6,1.000,14571.2,0.0,303.4,700.8
+base_t50,Base,Base case; tilt 50,1042.2,2603.0,811.3,229.9,297181,0.2060,493382,196201,39.8,28.5,286.3,153.7,39813,222.4,73.2,1.000,14571.2,0.0,307.1,697.0
+base_t60,Base,Base case; tilt 60,1097.7,2524.3,860.0,231.4,303331,0.2103,493382,190051,38.5,28.1,290.9,160.8,41658,226.9,72.4,1.000,14571.2,0.0,315.3,688.9

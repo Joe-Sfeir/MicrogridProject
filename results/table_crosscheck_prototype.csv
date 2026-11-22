@@ -1,0 +1,13 @@
+run,source,pv_kWp,bess_kWh,cost_USD_yr,lcoe_USD_kWh,renewable_fraction,diesel_MWh
+Reference (grid + diesel),prototype_lp.py,0,0,493382,0.342,0.00,962
+Reference (grid + diesel),this model with prototype settings,0.0,0.0,493382,0.3420,0.0000,962.1
+Base LPSP 1%,prototype_lp.py,1048,2893,281198,0.195,0.76,110
+Base LPSP 1%,this model with prototype settings,1048.2,2893.2,281198,0.1949,0.7560,110.0
+Base LPSP 0%,prototype_lp.py,1048,2893,286706,0.197,0.76,125
+Base LPSP 0%,this model with prototype settings,1048.2,2893.2,286706,0.1968,0.7560,124.5
+No grid at all,prototype_lp.py,1091,2941,307399,0.213,0.77,387
+No grid at all,this model with prototype settings,1090.5,2941.4,307399,0.2131,0.7658,386.9
+gap step 1: Prototype settings (tilt 40),this model,1048.2,2893.2,281198,0.1949,0.7560,110.0
+gap step 2: Battery O&M = 2.5% of capex per year; no charging cost,this model,1013.3,2664.6,293194,0.2032,0.7362,127.3
+gap step 3: Grid connection = peak load instead of 5 MW,this model,1013.5,2659.7,294428,0.2041,0.7359,148.8
+gap step 4: Cheapest tilt (base_t30) = base case,this model,982.5,2621.9,294277,0.2040,0.7273,152.2
