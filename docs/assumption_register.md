@@ -90,3 +90,16 @@ Last updated 22 Nov 2026.
 3. The irradiance correction uses a reference dataset, not ground measurements.
 4. The club's connection to the Faqra feeder is assumed.
 5. The base case requires zero shedding (LPSP 0%). A 0–5% sweep shows what relaxing this would save and when the shedding would happen.
+
+## Electrical design (single-line diagram, `paper/figs/sld.*`, drawn by `tools/make_sld.py`)
+
+| ID | Item | Value | Basis | Status |
+|---|---|---|---|---|
+| X1 | Point of common coupling and island boundary | 20 kV incomer of the club switchgear (52-PCC) | Whole club network (lifts, chalets) must be supplied in island mode; IEEE 1547-2018 intertie functions | D |
+| X2 | Coupling | AC-coupled PV, BESS and existing gensets on one 400 V generation bus, through a new 20/0.4 kV 1,000 kVA transformer | Net flow ≤ peak load (519 kW) + battery charging; margin for the export case | D |
+| X3 | PV inverters | 8 × 100 kVA string inverters, DC/AC 1.23, IEC 62116 anti-islanding | 983 kWp from the LP | D |
+| X4 | BESS PCS | 2 × 400 kVA, bidirectional, grid-forming (island master) | 790 kW from the LP; EDL is off ~16 h/day | D |
+| X5 | Existing gensets | ≥ 520 kW total, location and ratings unknown | Reference case needs the full peak | A |
+| X6 | Existing distribution transformers | TX-A 400, TX-L 400, TX-C1/C2 400, TX-R 100 kVA | Not published; sized from block peaks | A |
+| X7 | Load priority | Essential bus (water, wastewater, security, 30% of hotel/restaurant/office/road lighting, T1 recovery drive); F3 lifts, F4 chalets and the non-essential board are shed by the MGC | Critical shares L9; EN 13223 recovery drive | D |
+| X8 | Controller | Micro-grid controller per IEEE 2030.7/2030.8 | Standard | V |
