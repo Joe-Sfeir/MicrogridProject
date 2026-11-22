@@ -88,8 +88,8 @@ whole allowance in the busiest ski week, where shedding costs the club most, so 
 are reported only as a sensitivity.
 
 \emph{Lift recovery reserve.} While the chairlift runs, the battery holds the energy needed to bring
-passengers back on the recovery drive, $e(t) \ge \mathrm{SOC}_{\min}E_b + E_{\mathrm{rec}}$ with
-$E_{\mathrm{rec}}=30$~kWh.
+passengers back on the recovery drive, $e(t) \ge \mathrm{SOC}_{\min}E_b + E_{\mathrm{rec}}$ at the start and
+end of the hour, with $E_{\mathrm{rec}}=30$~kWh.
 
 \subsection{Grid Export (Sensitivity)}
 Lebanon's 2023 law on distributed renewable energy allows net metering and peer-to-peer sales, but
@@ -130,6 +130,6 @@ grid export). The robustness of the chosen design is checked by fixing its sizes
 dispatch for each weather year from 2014 to 2023.
 
 The model is written in MATLAB and solved with \texttt{linprog} (HiGHS dual simplex). The base case has
-87,606 variables and 96,362 constraints and solves in about 6~s. It was verified against a 48-hour case
+96,366 variables and 96,362 constraints and solves in about 6~s. It was verified against a 48-hour case
 with a hand-calculated optimum and against an independent Python implementation, which gave identical
 costs.
