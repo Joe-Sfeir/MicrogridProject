@@ -30,12 +30,8 @@ where $c_{pv}$, $c_b$ and $c_d$ are the capital costs, $m_{pv}$ and $\mu_b$ the 
 battery, $c_g$ the EDL tariff, $c_f$ the diesel price, $F(t)$ the fuel use from~\eqref{eq:fuel},
 $m_d$ the diesel O\&M, and $c_{deg}$ a throughput cost on battery discharge that represents
 wear~\cite{seger2023}. The existing generators are a sunk cost, so $c_d=0$ in the base case. Each
-component is annualized over its own life $n$ with the capital recovery factor at the real discount
-rate $i$:
-\begin{equation}
-\mathrm{CRF}(i,n) = \frac{i(1+i)^n}{(1+i)^n-1}.
-\label{eq:crf}
-\end{equation}
+component is annualized over its own life $n$ with the capital recovery factor
+$\mathrm{CRF}(i,n) = i(1+i)^n/[(1+i)^n-1]$ at the real discount rate $i$.
 
 \subsection{Constraints}
 \emph{Power balance} in every hour $t$ (time index omitted):
@@ -59,11 +55,7 @@ ending on stored energy it did not produce. The limits are
 \label{eq:batlim}
 \end{equation}
 
-\emph{Grid.} Import is possible only when the feeder is energized:
-\begin{equation}
-p_g(t) \le u_g(t)\,P_{g,\max},
-\label{eq:grid}
-\end{equation}
+\emph{Grid.} Import is possible only when the feeder is energized, $p_g(t) \le u_g(t)\,P_{g,\max}$,
 where $u_g(t)\in\{0,1\}$ is the measured availability of Section~III and $P_{g,\max}$ the connection
 capacity, set to the peak load. No energy is exported in the base case.
 
@@ -104,12 +96,7 @@ requires. Under net metering, exported energy is credited at the EDL tariff up t
 $\sum_t p_{ex}(t) \le \sum_t p_g(t)$; a second case sells it at a fixed price without that cap.
 
 \subsection{Economic Indicators}
-The levelized cost of energy is the annualized cost divided by the energy served,
-\begin{equation}
-\mathrm{LCOE} = \frac{C}{\sum_t \left[P_L(t) - \ell_n(t)\right]\Delta t}.
-\label{eq:lcoe}
-\end{equation}
-The project is also assessed over $N=25$ years with real, unlevered cash flows:
+The levelized cost of energy (LCOE) is the annualized cost $C$ divided by the energy served. The project is also assessed over $N=25$ years with real, unlevered cash flows:
 \begin{equation}
 \mathrm{NPV} = -I_0 + \sum_{y=1}^{N} \frac{S_y - R_y}{(1+i)^y} + \frac{V_N}{(1+i)^N},
 \label{eq:npv}
