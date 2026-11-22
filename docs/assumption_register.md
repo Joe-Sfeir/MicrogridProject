@@ -14,7 +14,7 @@ Last updated 22 Nov 2026.
 | M1 | Joint sizing + hourly dispatch as one LP, minimizing annualized cost | strong | GA course slides; Cutler 2017 (REopt, NREL/TP-7A40-70022); León 2023; Chedid 2020 | |
 | M2 | Full 8,760-h year, Δt = 1 h | strong | Kotzur 2018 (representative days under-size storage); Pfenninger 2017; REopt §1.5 | |
 | M3 | Representative weather year 2015 (closest to the 2014–2023 mean in annual and Dec–Mar yield) | partial | TMY selection logic (Wilcox & Marion 2008, NREL TMY3 manual); Javed 2023 | Single years under-size storage: re-run dispatch of the chosen design for all 10 years and report the worst-year LPSP (`pv_per_kWp_multiyear.csv`) |
-| M4 | Reliability: energy-based LPSP ≤ 1% | partial | Borhanazad 2014 Eq. 11; Lian 2019 Eq. 1; HOMER "max annual capacity shortage"; Yang 2008 (time-based, 1–2%) | With a genset, 0% is common (Kaabeche 2014; Dufo-López 2005). Sweep LPSP over 0, 0.5, 1, 2, 5% and justify 1% as shedding of non-critical load only |
+| M4 | Reliability: energy-based LPSP = 0% in the base case (changed from 1%, Nov 2026) | strong | Kaabeche 2014; Dufo-López 2005 (0% with a genset); Borhanazad 2014 Eq. 11; Lian 2019 Eq. 1 | The first model run showed that the 1% allowance was taken almost entirely in the peak ski week, so the base case requires zero shedding. The 0–5% sweep and a 1% off-peak-only variant are reported |
 | M5 | Zero unserved critical load (hard constraint) | strong | Cutler 2017 §1.3.1; NREL FS-7A40-76676 p. 2; Anderson 2018 (critical = 30% of load); NFPA 110 / NEC 700–702 classes | |
 | M6 | Bottom-up hourly load from end-use benchmarks and standard schedules, low/base/high | strong | Mandelli 2016 (LoadProGen); Lombardi 2019 (RAMP); Deru 2011 (DOE reference buildings) | |
 | M7 | Satellite irradiance (PVGIS SARAH-3) scaled monthly to Solargis long-term means | partial | Polo 2016 §4.2.1 (monthly bias removal); Urraca 2018 (SARAH low over snow, ERA5 high in mountains); PVGIS docs ("snow ... may be seen as clouds") | Strict site adaptation needs ground data, which is not available. SARAH-3 unscaled (low) and PVGIS-ERA5 (high) bracket it |
@@ -25,6 +25,8 @@ Last updated 22 Nov 2026.
 | M12 | Throughput battery degradation cost per kWh discharged, B = R/(L·√η_rt), plus a calendar-life replacement | strong | Bordin 2017 Eq. 2; Seger 2023 | |
 | M13 | Grid availability from the measured EDL Faqra feeder (Nov 2025 – Oct 2026) | strong (data) / A (that the club is on this feeder) | EDL daily feeding records (edl.gov.lb/feeding.php); Chedid 2020 used measured cut-offs | Fixed 4/8/12 h blocks and a 72 h outage as sensitivities |
 | M14 | Cost analysis in real USD, CRF annualization | strong | GA slides; standard engineering economics | |
+| M15 | Grid export only while the feeder is energised and only from PV; net metering credits kWh at the tariff up to the annual import (surplus forfeited) | partial | IEEE 1547-2018 (anti-islanding); Law 318/2023 (12-month banking; year-end compensation % to be set by the ERA, not yet set; LCPS 2024); EDL net-metering scheme 2011 (unused credit goes to EDL) | Export valuation is not yet regulated, so it is a sensitivity with an export-price sweep, not the base case |
+| M16 | NPV, IRR and payback on real, unlevered, pre-tax project cash flows; salvage at linear remaining life; battery replaced in year 15 | strong | Short, Packey & Holt 1995 (NREL/TP-462-5173); HOMER salvage definition | The financing structure is unknown, so an NPV-vs-discount-rate curve and the IRR show the cost of capital the project can carry |
 
 ## 2. Site, weather and PV
 
@@ -60,8 +62,8 @@ Last updated 22 Nov 2026.
 |---|---|---|---|---|
 | G1 | EDL supply, model year | 8.1 h/day (Nov 2025 – Oct 2026); 699-day mean 9.7 | EDL feeder records | V |
 | G2 | EDL tariff, MV/tourism | 0.27 $/kWh (0.27–0.37) + 0.6 $/kVA·month | EDL notice, 6 Feb 2024; high = EDL cost-recovery level | V |
-| G3 | Grid export | none in base (Law 318/2023 net metering as a sensitivity) | Law 318/2023 | V |
-| D1 | Diesel price | 1.41 $/L (0.80–1.52) | Lebanese price bulletins 2023–Nov 2026 | V |
+| G3 | Grid export | none in base; net metering at 0.27 $/kWh capped at annual import; export-price sweep 0–0.27 $/kWh | Law 318/2023; EDL 2011 scheme | V/A |
+| D1 | Diesel price | 1.41 $/L (0.80–1.52); sweep 0.60–2.00; break-even vs EDL energy ≈ 1.0–1.06 $/L | Lebanese price bulletins 2023–Nov 2026; break-even computed from D2, D4, G2 | V/D |
 | D2 | Fuel curve a, b | 0.017, 0.242 L/kWh (HOMER/Skarstein: 0.0815–0.084, 0.246) | fit to 6 genset datasheets 250–770 kVA | D |
 | D3 | Minimum stable load | 30% of committed capacity | Caterpillar guidance; Dufo-López 2005 Table 5 | V |
 | D4 | Genset O&M | 0.013 $/kWh (0.010–0.014) | grid_diesel.md | V/D |
@@ -87,4 +89,4 @@ Last updated 22 Nov 2026.
 2. Chalet occupancy and the critical share of hotel/restaurant load are assumed, calibrated to published ranges.
 3. The irradiance correction uses a reference dataset, not ground measurements.
 4. The club's connection to the Faqra feeder is assumed.
-5. LPSP = 1% is a design choice; a sweep is reported.
+5. The base case requires zero shedding (LPSP 0%). A 0–5% sweep shows what relaxing this would save and when the shedding would happen.
