@@ -16,13 +16,13 @@ $P_{dg}(t)$ and committed capacity $P_{\mathrm{com}}(t)$, and unserved critical 
 $\ell_c(t)$ and $\ell_n(t)$. All variables are non-negative and no integer variables are used.
 
 \subsection{Objective}
-The model minimizes the annualized cost of supply,
+The model minimizes the annualized cost of supply $C$,
 \begin{equation}
 \begin{split}
-\min\; C = {} & \left[\mathrm{CRF}_{pv}\,c_{pv} + m_{pv}\right] P_{pv}
- + \left[\mathrm{CRF}_{b} + \mu_b\right] c_b E_b + \mathrm{CRF}_{d}\,c_d P_d \\
- & + \sum_{t=1}^{T} \Big[ c_g\, p_g(t) + c_f F(t) \\
- & \qquad + m_{d} P_{dg}(t) + c_{deg}\, p_{dis}(t) \Big]\Delta t,
+C = {} & \left(\mathrm{CRF}_{pv}c_{pv} + m_{pv}\right) P_{pv}
+ + \left(\mathrm{CRF}_{b} + \mu_b\right) c_b E_b \\
+ & + \mathrm{CRF}_{d}\,c_d P_d + \sum_{t=1}^{T} \big[ c_g\, p_g(t) + c_f F(t) \\
+ & + m_{d} P_{dg}(t) + c_{deg}\, p_{dis}(t) \big]\Delta t,
 \end{split}
 \label{eq:obj}
 \end{equation}
@@ -104,7 +104,11 @@ requires. Under net metering, exported energy is credited at the EDL tariff up t
 $\sum_t p_{ex}(t) \le \sum_t p_g(t)$; a second case sells it at a fixed price without that cap.
 
 \subsection{Economic Indicators}
-The levelized cost of energy is $\mathrm{LCOE} = C / \sum_t \left[P_L(t) - \ell_n(t)\right]\Delta t$.
+The levelized cost of energy is the annualized cost divided by the energy served,
+\begin{equation}
+\mathrm{LCOE} = \frac{C}{\sum_t \left[P_L(t) - \ell_n(t)\right]\Delta t}.
+\label{eq:lcoe}
+\end{equation}
 The project is also assessed over $N=25$ years with real, unlevered cash flows:
 \begin{equation}
 \mathrm{NPV} = -I_0 + \sum_{y=1}^{N} \frac{S_y - R_y}{(1+i)^y} + \frac{V_N}{(1+i)^N},
