@@ -4,7 +4,7 @@ function write_outputs(outdir, S)
 %   write_outputs(outdir, S)     S is the struct built by main.m
 %
 % Files
-%   runs_all.csv                   every run, every KPI and check
+%   runs_all.csv                   all reported runs with every KPI and check
 %   table_base_vs_reference.csv    base case next to the status quo
 %   table_tilt.csv                 base case for each PV tilt
 %   table_sensitivities.csv        one-at-a-time sensitivities
@@ -33,7 +33,8 @@ sp = sp(6:end - 6, :);                         % numbers only, without solver de
 fid = fopen(fullfile(outdir, 'table_base_vs_reference.csv'), 'w');
 fprintf(fid, 'quantity,reference,base_case\n');
 for j = 1:size(sp, 1)
-    fprintf(fid, '%s,%s,%s\n', sp{j, 1}, cellstr_of(S.Kref, sp(j, :)), cellstr_of(S.Kbase, sp(j, :)));
+    % strjoin, not fprintf('%s,%s,%s'): MATLAB's fprintf skips empty arguments
+    fprintf(fid, '%s\n', strjoin({sp{j, 1}, cellstr_of(S.Kref, sp(j, :)), cellstr_of(S.Kbase, sp(j, :))}, ','));
 end
 fclose(fid);
 
@@ -90,8 +91,8 @@ if full
     fid = fopen(fullfile(outdir, 'tornado_lcoe.csv'), 'w');
     fprintf(fid, 'group,lcoe_low_USD_kWh,case_low,lcoe_base_USD_kWh,lcoe_high_USD_kWh,case_high\n');
     for j = 1:numel(Tn)
-        fprintf(fid, '%s,%.4f,%s,%.4f,%.4f,%s\n', Tn(j).group, Tn(j).lo, strrep(Tn(j).lo_label, ',', ''), ...
-                Tn(j).base, Tn(j).hi, strrep(Tn(j).hi_label, ',', ''));
+        fprintf(fid, '%s\n', strjoin({Tn(j).group, sprintf('%.4f', Tn(j).lo), strrep(Tn(j).lo_label, ',', ''), ...
+                sprintf('%.4f', Tn(j).base), sprintf('%.4f', Tn(j).hi), strrep(Tn(j).hi_label, ',', '')}, ','));
     end
     fclose(fid);
 end
@@ -200,6 +201,7 @@ elseif isnan(v)
     str = '';
 else
     str = sprintf(sprow{4}, double(v) * sprow{3});
+    if ~isempty(regexp(str, '^-0(\.0+)?$', 'once')), str = str(2:end); end    % no "-0.0"
 end
 end
 
@@ -217,7 +219,9 @@ if ~isempty(strfind(S.info.software, 'Octave')) %#ok<STREMP>
     p(['**These numbers were produced with GNU Octave and HiGHS, not with MATLAB.** The model code is the ' ...
        'same; in MATLAB `solve_lp.m` calls `linprog`. Re-run `main` in MATLAB before quoting the numbers ' ...
        'in the paper. The optimal cost of an LP is unique, so the costs should agree; sizes and the hourly ' ...
-       'dispatch can differ slightly where several solutions are equally cheap.\n\n']);
+       'dispatch can differ slightly where several solutions are equally cheap. From R2024a `linprog` ' ...
+       'uses HiGHS by default; with older releases it uses another dual simplex, whose run time on this ' ...
+       'problem has not been tested: start with `main(''quick'')`.\n\n']);
 end
 if ~full
     p('**Quick run:** only the reference and the base case were solved. Run `main` for the full study.\n\n');
@@ -253,17 +257,16 @@ p('battery degradation %s, diesel capex %s, fuel %s, diesel O&M %s, grid energy 
   commas(B.c_b_deg), commas(B.c_d_capex), commas(B.c_fuel), commas(B.c_dg_om), commas(B.c_grid));
 
 p(['The %g%% of load that may be shed is non-critical load only. The model uses the allowance in ' ...
-   'the hours that set the diesel rating: %.0f%% of the shed energy falls in December to March, in %d ' ...
-   'hours, most of it in the weeks of highest load and lowest PV output (see ' ...
-   '`fig_dispatch_winter_week.png`). With LPSP 0%% nothing is shed; the `lpsp_0` sensitivity gives the ' ...
-   'cost and the diesel rating of that design.\n\n'], 100 * s.lpsp_max, 100 * B.uns_winter_frac, B.uns_hours);
+   'the hours that set the diesel rating: load is shed in %d hours, up to %.0f kW at a time, and %.0f%% ' ...
+   'of the shed energy falls in December to March.\n\n'], 100 * s.lpsp_max, B.uns_hours, B.uns_max_kW, ...
+   100 * B.uns_winter_frac);
 
 % ---------------------------------------------------------------- tilt
 p('## PV tilt\n\n');
 md_runs(fid, S.Ktilt, false);
 ct = sort([S.Ktilt.cost]);
-p(['The two cheapest tilts differ by %s $/yr (%.2f%% of the cost), so the choice between them is not ' ...
-   'decided by cost.\n\n'], commas(ct(2) - ct(1)), 100 * (ct(2) - ct(1)) / ct(1));
+p('The two cheapest tilts differ by %s $/yr (%.2f%% of the cost).\n\n', commas(ct(2) - ct(1)), ...
+  100 * (ct(2) - ct(1)) / ct(1));
 
 if full
     % ------------------------------------------------------ sensitivities
@@ -273,8 +276,9 @@ if full
     md_runs(fid, [B, S.Ksens], true);
     Kl = S.Ksens(strcmp({S.Ksens.group}, 'Load'));
     if ~isempty(Kl)
-        p(['The load scenarios change the size of the system and its cost (%s to %s $/yr) much more than ' ...
-           'the LCOE.\n\n'], commas(min([Kl.cost])), commas(max([Kl.cost])));
+        p(['Across the load scenarios and the base case the cost ranges from %s to %s $/yr and the LCOE ' ...
+           'from %.3f to %.3f $/kWh.\n\n'], commas(min([Kl.cost, B.cost])), commas(max([Kl.cost, B.cost])), ...
+           min([Kl.lcoe, B.lcoe]), max([Kl.lcoe, B.lcoe]));
     end
     bad = S.Ksens(~[S.Ksens.ok]);
     for j = 1:numel(bad)
@@ -287,7 +291,9 @@ if full
     p(['PV yield of each weather year 2014-2023 at tilt %d deg, same load and grid. Load may be shed beyond ' ...
        'the LPSP limit at a penalty, so a shortfall shows up as LPSP above %g%% or as unserved critical ' ...
        'load. (a) keeps the diesel rating at the base-case value of %.0f kW; (b) lets the diesel rating ' ...
-       'be as large as needed, since the existing sets also carry the status quo.\n\n'], ...
+       'be as large as needed, since the existing sets also carry the status quo. Unserved energy costs ' ...
+       'nothing in the reported cost, so under (a) a year that sheds more than the limit can look cheaper ' ...
+       'than under (b): use (b) to compare costs between years.\n\n'], ...
        S.best_tilt, 100 * s.lpsp_max, B.P_d);
     p(['| Year | (a) cost $/yr | (a) LPSP | (a) unserved critical kWh | (b) cost $/yr | (b) LPSP | ' ...
        '(b) diesel kW | (b) diesel MWh |\n|---|---|---|---|---|---|---|---|\n']);
@@ -306,8 +312,12 @@ if full
 
     % --------------------------------------------------------- cross-check
     p('## Cross-check against `tools/prototype_lp.py`\n\n');
-    p(['With the prototype''s settings (tilt 40 deg, 5 MW grid connection, battery O&M as 2.5%% of the ' ...
-       'annualized capex, 1e-4 $/kWh on charging) the model gives the prototype''s results:\n\n']);
+    pm = vertcat(S.cross.rows.proto);  mm = vertcat(S.cross.rows.model);
+    p(['The model was run with the prototype''s settings (tilt 40 deg, 5 MW grid connection, battery O&M as ' ...
+       '%g%% of the annualized capex, 1e-4 $/kWh on charging). Largest difference to the prototype over ' ...
+       'the four runs: %.0f $/yr in cost, %.1f kWp of PV, %.1f kWh of battery.\n\n'], ...
+       100 * s.om_b_frac, max(abs(pm(:, 3) - mm(:, 3))), max(abs(pm(:, 1) - mm(:, 1))), ...
+       max(abs(pm(:, 2) - mm(:, 2))));
     p(['| Run | PV kWp | BESS kWh | Cost $/yr | LCOE $/kWh | Renewable fraction | Diesel MWh |\n' ...
        '|---|---|---|---|---|---|---|\n']);
     for j = 1:numel(S.cross.rows)
@@ -341,6 +351,13 @@ p(['- Base case LP: %s variables, %s equality and %s inequality constraints, %s 
 p('- Power balance residual: at most %.1e kW in any hour.\n', B.chk_balance);
 p('- Battery energy balance and cyclic condition: residual at most %.1e kWh.\n', B.chk_soc);
 p('- Simultaneous charge and discharge: %d hours (largest overlap %.1e kW).\n', B.chk_simul_h, B.chk_simul_kW);
+if full
+    jd = find(abs([S.Kwx.E_pv_avail] - B.E_pv_avail) < 1e-6 * B.E_pv_avail, 1);
+    if ~isempty(jd)
+        p(['- Dispatch-only run with the design weather year (%d) and the base-case sizes: cost differs ' ...
+           'from the base case by %.2f $/yr.\n'], S.years(jd), abs(S.Kwx(jd).cost - B.cost));
+    end
+end
 p(['- Diesel: runs %d hours. Hours with diesel while PV is curtailed: %d; while the grid has spare ' ...
    'capacity: %d; while the battery charges: %d.\n'], B.dg_hours, B.chk_dg_curt_h, B.chk_dg_grid_h, ...
    B.chk_dg_charge_h);
@@ -375,7 +392,9 @@ p(['- **Battery cost.** Base: all-in %g $/kWh on `E_b`, with the power rating li
    100 * s.om_b_frac, s.c_bE, s.c_bP);
 p(['- **Reference.** Grid + diesel only, with the same LPSP limit as the case it is compared with, so ' ...
    'it may also shed up to %g%% of the load.\n'], 100 * s.lpsp_max);
-p(['- **Snow 15%%.** The series without snow, multiplied by 0.85 in December to March.\n']);
+snow_hi = S.D.par.pv.snow_loss_dec_mar_pct{3};
+p('- **Snow %g%%.** The series without snow, multiplied by %g in December to March.\n', snow_hi, ...
+  1 - snow_hi / 100);
 p(['- **Cold-weather derating.** The usable capacity (1 - SOC_min) E_b is multiplied by the factor in ' ...
    'December to March (upper SOC bound lowered).\n']);
 p(['- **Dispatch-only runs.** Penalties of %g $/kWh on shedding above the LPSP limit and %g $/kWh on ' ...
@@ -385,14 +404,16 @@ p(['- **Definitions.** Renewable fraction = PV used / load (course slides). Batt
    'discharged / E_b. LPSP = unserved energy / load. LCOE = annualized cost / served energy.\n\n']);
 
 p('## Not in the model\n\n');
-p(['PV degradation over the years, the EDL fixed charge (0.6 $/kVA per month), grid export, the T1 lift ' ...
+p(['PV degradation over the years, the EDL fixed charge (%g $/kVA per month), grid export, the T1 lift ' ...
    'recovery reserve, and a renewable-share constraint (constraint 7 is implemented, `re_min`, but no ' ...
-   'target value is given in `parameters.json`, so no run uses it).\n\n']);
+   'target value is given in `parameters.json`, so no run uses it).\n\n'], ...
+   S.D.par.grid.edl_fixed_per_kVA_month);
 
 % --------------------------------------------------------------- files
 p('## Files\n\n');
 p('| File | Content |\n|---|---|\n');
-p('| `runs_all.csv` | Every run: sizes, cost breakdown, energies, emissions, checks, solver |\n');
+p(['| `runs_all.csv` | Reference, tilts, sensitivities, weather years and cross-check steps: sizes, cost ' ...
+   'breakdown, energies, emissions, checks, solver |\n']);
 p('| `table_base_vs_reference.csv` | Base case next to the reference |\n');
 p('| `table_tilt.csv` | Base case at tilt 30/40/50/60 |\n');
 if full

@@ -1,8 +1,8 @@
 # Results: Faqra Club PV + battery microgrid (LP model)
 
-Written by `model/main.m` on 2026-11-22 13:29 with GNU Octave 8.4.0. Solver: HiGHS dual simplex (scipy, called from GNU Octave). Run time 325 s. Do not edit by hand: re-run `main` to regenerate every file in this folder.
+Written by `model/main.m` on 2026-11-22 13:56 with GNU Octave 8.4.0. Solver: HiGHS dual simplex (scipy, called from GNU Octave). Run time 341 s. Do not edit by hand: re-run `main` to regenerate every file in this folder.
 
-**These numbers were produced with GNU Octave and HiGHS, not with MATLAB.** The model code is the same; in MATLAB `solve_lp.m` calls `linprog`. Re-run `main` in MATLAB before quoting the numbers in the paper. The optimal cost of an LP is unique, so the costs should agree; sizes and the hourly dispatch can differ slightly where several solutions are equally cheap.
+**These numbers were produced with GNU Octave and HiGHS, not with MATLAB.** The model code is the same; in MATLAB `solve_lp.m` calls `linprog`. Re-run `main` in MATLAB before quoting the numbers in the paper. The optimal cost of an LP is unique, so the costs should agree; sizes and the hourly dispatch can differ slightly where several solutions are equally cheap. From R2024a `linprog` uses HiGHS by default; with older releases it uses another dual simplex, whose run time on this problem has not been tested: start with `main('quick')`.
 
 ## Base case
 
@@ -22,12 +22,15 @@ Base load (club + chalets, 1,457 MWh/yr, peak 519 kW), measured EDL feeder avail
 | PV curtailed | | 29.4% of available PV |
 | LPSP achieved | 1.00% | 1.00% |
 | Unserved critical load | 0.0 kWh | 0.0 kWh |
+| Load shedding | 269 h, up to 90 kW | 126 h, up to 266 kW |
 | Battery cycles | | 218 per year |
 | CO2 | 1,004 t/yr | 311 t/yr |
 
 Saving against the reference: **199,105 $/yr (40.4%)**, and 693 t CO2 per year.
 
 Cost breakdown of the base case ($/yr): PV capex 60,040, PV O&M 17,685, battery capex 55,655, battery O&M 12,585, battery degradation 11,406, diesel capex 0, fuel 55,569, diesel O&M 1,948, grid energy 79,389.
+
+The 1% of load that may be shed is non-critical load only. The model uses the allowance in the hours that set the diesel rating: load is shed in 126 hours, up to 266 kW at a time, and 100% of the shed energy falls in December to March.
 
 ## PV tilt
 
@@ -37,6 +40,8 @@ Cost breakdown of the base case ($/yr): PV capex 60,040, PV O&M 17,685, battery 
 | Base case, tilt 40 | 1,014 | 2,660 | 230 | 294,428 | 0.204 | 40.3% | 73.6% | 149 | 1.00% |
 | Base case, tilt 50 | 1,042 | 2,603 | 230 | 297,181 | 0.206 | 39.8% | 73.2% | 154 | 1.00% |
 | Base case, tilt 60 | 1,098 | 2,524 | 231 | 303,331 | 0.210 | 38.5% | 72.4% | 161 | 1.00% |
+
+The two cheapest tilts differ by 150 $/yr (0.05% of the cost).
 
 ## Sensitivities (one change at a time from the base case)
 
@@ -75,9 +80,11 @@ Cost breakdown of the base case ($/yr): PV capex 60,040, PV O&M 17,685, battery 
 | Battery cost form: 139 $/kWh + 214 $/kW | 999 | 2,840 | 226 | 288,731 | 0.200 | 41.5% | 73.7% | 141 | 1.00% |
 | Grid connection: 5 MW connection | 980 | 2,642 | 211 | 293,035 | 0.203 | 40.6% | 72.8% | 130 | 1.00% |
 
+Across the load scenarios and the base case the cost ranges from 127,237 to 679,649 $/yr and the LCOE from 0.200 to 0.204 $/kWh.
+
 ## Weather robustness (base-case sizes fixed, dispatch re-optimized)
 
-PV yield of each weather year 2014-2023 at tilt 30 deg, same load and grid. Load may be shed beyond the LPSP limit at a penalty, so a shortfall shows up as LPSP above 1% or as unserved critical load. (a) keeps the diesel rating at the base-case value of 233 kW; (b) lets the diesel rating be as large as needed, since the existing sets also carry the status quo.
+PV yield of each weather year 2014-2023 at tilt 30 deg, same load and grid. Load may be shed beyond the LPSP limit at a penalty, so a shortfall shows up as LPSP above 1% or as unserved critical load. (a) keeps the diesel rating at the base-case value of 233 kW; (b) lets the diesel rating be as large as needed, since the existing sets also carry the status quo. Unserved energy costs nothing in the reported cost, so under (a) a year that sheds more than the limit can look cheaper than under (b): use (b) to compare costs between years.
 
 | Year | (a) cost $/yr | (a) LPSP | (a) unserved critical kWh | (b) cost $/yr | (b) LPSP | (b) diesel kW | (b) diesel MWh |
 |---|---|---|---|---|---|---|---|
@@ -96,7 +103,7 @@ Worst year with all sizes fixed: LPSP 1.33% (2019), unserved critical load 0.0 k
 
 ## Cross-check against `tools/prototype_lp.py`
 
-With the prototype's settings (tilt 40 deg, 5 MW grid connection, battery O&M as 2.5% of the annualized capex, 1e-4 $/kWh on charging) the model gives the prototype's results:
+The model was run with the prototype's settings (tilt 40 deg, 5 MW grid connection, battery O&M as 2.5% of the annualized capex, 1e-4 $/kWh on charging). Largest difference to the prototype over the four runs: 0 $/yr in cost, 0.5 kWp of PV, 0.4 kWh of battery.
 
 | Run | PV kWp | BESS kWh | Cost $/yr | LCOE $/kWh | Renewable fraction | Diesel MWh |
 |---|---|---|---|---|---|---|
@@ -124,10 +131,11 @@ From the prototype to the base case of this study:
 
 - Inputs: 84 of 84 annual sums and peaks match `inputs/inputs_summary.md` (`input_checks.csv`).
 - 48-hour test (`model/tests/test_small_case.m`): all hand-calculated cases reproduced.
-- Base case LP: 87,606 variables, 26,280 equality and 70,082 inequality constraints, 261,186 non-zeros. Solver status: optimal. Solve time 6.4 s.
+- Base case LP: 87,606 variables, 26,280 equality and 70,082 inequality constraints, 261,186 non-zeros. Solver status: optimal. Solve time 6.3 s.
 - Power balance residual: at most 2.3e-13 kW in any hour.
 - Battery energy balance and cyclic condition: residual at most 3.9e-12 kWh.
 - Simultaneous charge and discharge: 0 hours (largest overlap 0.0e+00 kW).
+- Dispatch-only run with the design weather year (2015) and the base-case sizes: cost differs from the base case by 0.00 $/yr.
 - Diesel: runs 841 hours. Hours with diesel while PV is curtailed: 0; while the grid has spare capacity: 0; while the battery charges: 0.
 - Committed capacity: u_dg equals p_dg in every hour (largest gap 0.0e+00 kW), so the minimum-load constraint (5c) never binds and fuel use is (a + b) = 0.259 L/kWh.
 - In 57 of the 841 diesel hours the output is below 30% of the full rating of 233 kW, which one single set of that size could not do.
@@ -136,7 +144,7 @@ From the prototype to the base case of this study:
 ## Choices made where the brief left room
 
 - **Grid connection.** `P_gmax` is fixed to the peak of the scenario's load (519 kW in the base case). It has no cost in the objective, so it cannot be a free decision. The `grid_5MW` sensitivity shows the effect of a connection that never limits.
-- **Zero-cost sizes.** The diesel rating (existing sets, capex 0) and, with the all-in battery cost, the PCS rating have no cost, so the LP alone does not fix them. A tie-breaker of 0.001 $/kW-yr makes the solver return the smallest rating that is enough. It is excluded from every reported cost.
+- **Zero-cost sizes.** The diesel rating (existing sets, capex 0) and, with the all-in battery cost, the PCS rating have no cost, so the LP alone does not fix them. A tie-breaker of 0.001 $/kW-yr makes the solver return the smallest rating that is enough. It is excluded from every reported cost. One consequence: which hours are shed under the LPSP limit is also a tie in cost (every diesel kWh costs the same), and the tie-breaker settles it by shedding at the diesel peaks.
 - **Battery cost.** Base: all-in 192 $/kWh on `E_b`, with the power rating limited to 0.5C. O&M is 2.5% of the capex per year. `batt_split` uses 139 $/kWh + 214 $/kW instead.
 - **Reference.** Grid + diesel only, with the same LPSP limit as the case it is compared with, so it may also shed up to 1% of the load.
 - **Snow 15%.** The series without snow, multiplied by 0.85 in December to March.
@@ -152,7 +160,7 @@ PV degradation over the years, the EDL fixed charge (0.6 $/kVA per month), grid 
 
 | File | Content |
 |---|---|
-| `runs_all.csv` | Every run: sizes, cost breakdown, energies, emissions, checks, solver |
+| `runs_all.csv` | Reference, tilts, sensitivities, weather years and cross-check steps: sizes, cost breakdown, energies, emissions, checks, solver |
 | `table_base_vs_reference.csv` | Base case next to the reference |
 | `table_tilt.csv` | Base case at tilt 30/40/50/60 |
 | `table_sensitivities.csv` | Base case and all sensitivities |

@@ -196,7 +196,11 @@ build_time = toc(t_build);
 % ------------------------------------------------------------------ result
 R = struct();
 R.s          = s;
-R.ok         = (exitflag == 1) && ~isempty(x);
+R.ok         = any(exitflag == [1 3]) && ~isempty(x);
+if exitflag == 3
+    warning('build_and_solve:tolerance', ['%s: linprog returned exitflag 3 (feasible only within the ' ...
+            'relative constraint tolerance). Check the residuals in the results.'], s.name);
+end
 R.exitflag   = exitflag;
 R.solver     = info.solver;
 R.message    = info.message;

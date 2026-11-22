@@ -1,7 +1,7 @@
 function S = main(mode)
 %MAIN  Run the Faqra Club microgrid study and write the results/ folder.
 %
-%   main            full study (about 80 LPs, 10 to 15 minutes)
+%   main            full study (about 80 LPs; 5 to 10 minutes with HiGHS)
 %   main('quick')   input checks, 48-h test, reference and base case at the
 %                   four tilts, with figures (about 1 minute)
 %   S = main(...)   also returns all results in one struct
@@ -16,8 +16,10 @@ function S = main(mode)
 %   6. cross-check against tools/prototype_lp.py
 %   7. tables (CSV), figures (PNG) and README.md in results/
 %
-% Requires MATLAB with the Optimization Toolbox (linprog). It also runs in
-% GNU Octave with python3 + scipy (see solve_lp.m).
+% Requires MATLAB with the Optimization Toolbox (linprog). From R2024a
+% linprog uses the HiGHS dual simplex by default; with older releases the run
+% time is untested, so try main('quick') first. It also runs in GNU Octave
+% with python3 + scipy (see solve_lp.m).
 
 if nargin < 1, mode = 'full'; end
 quick = strcmpi(mode, 'quick');
@@ -144,7 +146,7 @@ if K.ok
              '  LPSP %.2f%%  saving %5.1f%%  (%.1f s)\n'], s.name, K.cost, K.lcoe, K.P_pv, ...
             K.E_b, K.P_d, 100 * K.lpsp, 100 * K.savings_frac, R.solve_time);
 else
-    fprintf('  %-22s NOT SOLVED: %s\n', s.name, R.message);
+    fprintf('  %-22s NOT SOLVED: %s\n', s.name, ['exitflag ' num2str(R.exitflag) ' ' R.message]);
 end
 end
 
