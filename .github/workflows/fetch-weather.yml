@@ -1,0 +1,26 @@
+name: Fetch weather data
+on:
+  push:
+    branches: [ "claude/**" ]
+    paths: [ "tools/fetch_weather.py", ".github/workflows/fetch-weather.yml" ]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download PVGIS, ERA5-Land and NASA POWER data
+        run: python tools/fetch_weather.py
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/weather
+          git commit -m "Add Faqra weather data (PVGIS, ERA5-Land, NASA POWER)" || echo "nothing to commit"
+          git push
