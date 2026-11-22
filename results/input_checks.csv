@@ -1,0 +1,85 @@
+check,expected_inputs_summary,loaded,tolerance,pass
+load low: chalets energy (MWh),443.1,443.147545,0.051,1
+load low: chalets peak (kW),165,165.002,0.051,1
+load base: chalets energy (MWh),932,931.976792,0.051,1
+load base: chalets peak (kW),399.7,399.725,0.051,1
+load high: chalets energy (MWh),2076.3,2076.256408,0.051,1
+load high: chalets peak (kW),820.5,820.48,0.051,1
+load low: club_total energy (MWh),196,195.986931,0.051,1
+load low: club_total peak (kW),74.8,74.798,0.051,1
+load base: club_total energy (MWh),525.1,525.147951,0.051,1
+load base: club_total peak (kW),165.2,165.212,0.051,1
+load high: club_total energy (MWh),1357.7,1357.679534,0.051,1
+load high: club_total peak (kW),346.9,346.904,0.051,1
+load low: critical energy (MWh),67.4,67.389186,0.051,1
+load low: critical peak (kW),14.6,14.551,0.051,1
+load base: critical energy (MWh),184.3,184.305141,0.051,1
+load base: critical peak (kW),40.5,40.55,0.051,1
+load high: critical energy (MWh),517.9,517.878745,0.051,1
+load high: critical peak (kW),108.7,108.658,0.051,1
+load low: total (club + chalets) energy (MWh),639.1,639.134476,0.051,1
+load low: total (club + chalets) peak (kW),220.1,220.103,0.051,1
+load base: total (club + chalets) energy (MWh),1457.1,1457.124707,0.051,1
+load base: total (club + chalets) peak (kW),519.3,519.268,0.051,1
+load high: total (club + chalets) energy (MWh),3433.9,3433.936252,0.051,1
+load high: total (club + chalets) peak (kW),1065.7,1065.743,0.051,1
+PV base_t30 (kWh/kWp),1544,1543.7312,0.51,1
+PV base_t30_snow (kWh/kWp),1527,1527.03,0.51,1
+PV low_t30 (kWh/kWp),1467,1467.196,0.51,1
+PV base_t40 (kWh/kWp),1512,1511.7678,0.51,1
+PV base_t40_snow (kWh/kWp),1497,1496.8019,0.51,1
+PV low_t40 (kWh/kWp),1434,1434.3397,0.51,1
+PV base_t50 (kWh/kWp),1446,1446.4438,0.51,1
+PV base_t50_snow (kWh/kWp),1433,1432.5318,0.51,1
+PV low_t50 (kWh/kWp),1370,1369.818,0.51,1
+PV base_t60 (kWh/kWp),1348,1348.1611,0.51,1
+PV base_t60_snow (kWh/kWp),1335,1335.4715,0.51,1
+PV low_t60 (kWh/kWp),1274,1274.0374,0.51,1
+PV high_t40 (kWh/kWp),1761,1761.2371,0.51,1
+PV high_t40_snow (kWh/kWp),1736,1735.7271,0.51,1
+PV y2014_t30 (kWh/kWp),1639,1639.2911,0.51,1
+PV y2014_t40 (kWh/kWp),1606,1606.1079,0.51,1
+PV y2014_t50 (kWh/kWp),1537,1537.2307,0.51,1
+PV y2014_t60 (kWh/kWp),1433,1433.2144,0.51,1
+PV y2015_t30 (kWh/kWp),1527,1527.03,0.51,1
+PV y2015_t40 (kWh/kWp),1497,1496.8019,0.51,1
+PV y2015_t50 (kWh/kWp),1433,1432.5318,0.51,1
+PV y2015_t60 (kWh/kWp),1335,1335.4715,0.51,1
+PV y2016_t30 (kWh/kWp),1549,1549.1096,0.51,1
+PV y2016_t40 (kWh/kWp),1515,1515.1021,0.51,1
+PV y2016_t50 (kWh/kWp),1446,1446.1444,0.51,1
+PV y2016_t60 (kWh/kWp),1343,1343.4982,0.51,1
+PV y2017_t30 (kWh/kWp),1531,1531.4218,0.51,1
+PV y2017_t40 (kWh/kWp),1495,1494.6017,0.51,1
+PV y2017_t50 (kWh/kWp),1424,1424.3798,0.51,1
+PV y2017_t60 (kWh/kWp),1321,1321.4657,0.51,1
+PV y2018_t30 (kWh/kWp),1496,1495.7033,0.51,1
+PV y2018_t40 (kWh/kWp),1459,1459.4519,0.51,1
+PV y2018_t50 (kWh/kWp),1391,1391.1304,0.51,1
+PV y2018_t60 (kWh/kWp),1291,1291.4377,0.51,1
+PV y2019_t30 (kWh/kWp),1498,1498.2224,0.51,1
+PV y2019_t40 (kWh/kWp),1470,1469.9391,0.51,1
+PV y2019_t50 (kWh/kWp),1408,1408.4727,0.51,1
+PV y2019_t60 (kWh/kWp),1315,1314.6849,0.51,1
+PV y2020_t30 (kWh/kWp),1506,1505.9195,0.51,1
+PV y2020_t40 (kWh/kWp),1472,1472.1169,0.51,1
+PV y2020_t50 (kWh/kWp),1405,1405.2449,0.51,1
+PV y2020_t60 (kWh/kWp),1306,1306.0068,0.51,1
+PV y2021_t30 (kWh/kWp),1641,1640.5249,0.51,1
+PV y2021_t40 (kWh/kWp),1609,1609.4395,0.51,1
+PV y2021_t50 (kWh/kWp),1541,1541.4449,0.51,1
+PV y2021_t60 (kWh/kWp),1437,1437.4305,0.51,1
+PV y2022_t30 (kWh/kWp),1537,1537.3611,0.51,1
+PV y2022_t40 (kWh/kWp),1503,1502.9411,0.51,1
+PV y2022_t50 (kWh/kWp),1434,1433.5947,0.51,1
+PV y2022_t60 (kWh/kWp),1330,1330.1715,0.51,1
+PV y2023_t30 (kWh/kWp),1582,1582.155,0.51,1
+PV y2023_t40 (kWh/kWp),1550,1549.6323,0.51,1
+PV y2023_t50 (kWh/kWp),1482,1482.3217,0.51,1
+PV y2023_t60 (kWh/kWp),1380,1380.0391,0.51,1
+grid u_base_feeder (h/yr),2960,2960,0.5,1
+grid u_4h (h/yr),1459,1459,0.5,1
+grid u_8h (h/yr),2919,2919,0.5,1
+grid u_12h (h/yr),4379,4379,0.5,1
+grid u_none (h/yr),0,0,0.5,1
+grid u_base_plus72h_outage (h/yr),2929,2929,0.5,1
