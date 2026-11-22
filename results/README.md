@@ -1,12 +1,12 @@
 # Results: Faqra Club PV + battery microgrid (LP model)
 
-Written by `model/main.m` on 2026-11-22 14:45 with GNU Octave 8.4.0. Solver: HiGHS dual simplex (scipy, called from GNU Octave). Run time 616 s. Do not edit by hand: re-run `main` to regenerate every file in this folder. The briefs are `docs/fable_prompt.md` and `docs/fable_prompt_round2.md`.
+Written by `model/main.m` on 2026-11-22 15:03 with GNU Octave 8.4.0. Solver: HiGHS dual simplex (scipy, called from GNU Octave). Run time 595 s. Do not edit by hand: re-run `main` to regenerate every file in this folder. The briefs are `docs/fable_prompt.md` and `docs/fable_prompt_round2.md`.
 
 **These numbers were produced with GNU Octave and HiGHS, not with MATLAB.** The model code is the same; in MATLAB `solve_lp.m` calls `linprog`. Re-run `main` in MATLAB before quoting the numbers in the paper. The optimal cost of an LP is unique, so the costs should agree; sizes and the hourly dispatch can differ slightly where several solutions are equally cheap. From R2024a `linprog` uses HiGHS by default; with older releases it uses another dual simplex, whose run time on this problem has not been tested: start with `main('quick')`.
 
 ## Base case
 
-Base load (club + chalets, 1,457 MWh/yr, peak 519 kW), measured EDL feeder availability, base irradiance with snow loss, all parameters at base. LPSP limit 0% (no load may be shed). The battery keeps 30 kWh above its minimum whenever the T1 chairlift runs. PV tilt 30 deg is the cheapest of the four tilts.
+Base load (club + chalets, 1,457 MWh/yr, peak 519 kW), measured EDL feeder availability, base irradiance with snow loss, all parameters at base. LPSP limit 0% (no load may be shed). The battery keeps 30 kWh above its minimum from the start to the end of every hour in which the T1 chairlift runs. PV tilt 30 deg is the cheapest of the 4 tilts.
 
 | | Reference (grid + diesel) | Base case (PV + battery + grid + diesel) |
 |---|---|---|
@@ -40,17 +40,17 @@ The first round used an LPSP limit of 1%. The table shows where the model puts t
 
 | Case | Shed MWh | Hours | Largest shed hour | On ski days | In Dec-Mar | In the worst 7 days (starting) | Diesel kW | Cost saving vs base $/yr |
 |---|---|---|---|---|---|---|---|---|
-| LPSP 0.5% | 7.3 | 61 | 226 kW, 2026-01-03 20:00 | 96% | 100% | 64% (2026-01-05) | 268 | 2,754 |
-| LPSP 1% | 14.6 | 114 | 266 kW, 2026-01-11 13:00 | 92% | 100% | 48% (2026-01-05) | 233 | 5,508 |
-| LPSP 2% | 29.1 | 170 | 313 kW, 2026-01-11 13:00 | 92% | 100% | 36% (2026-01-05) | 187 | 11,016 |
-| LPSP 5% | 72.9 | 353 | 417 kW, 2026-01-10 12:00 | 89% | 99% | 27% (2026-01-05) | 94 | 27,539 |
-| LPSP 1%, none on ski days | 14.6 | 97 | 453 kW, 2026-03-21 20:00 | 0% | 47% | 22% (2026-03-24) | 354 | 5,508 |
+| LPSP 0.5% | 7.3 | 56 | 232 kW, 2026-01-11 13:00 | 96% | 100% | 64% (2026-01-05) | 268 | 2,754 |
+| LPSP 1% | 14.6 | 117 | 266 kW, 2026-01-11 13:00 | 92% | 100% | 48% (2026-01-05) | 233 | 5,508 |
+| LPSP 2% | 29.1 | 178 | 313 kW, 2026-01-11 13:00 | 92% | 100% | 36% (2026-01-05) | 187 | 11,016 |
+| LPSP 5% | 72.9 | 344 | 417 kW, 2026-01-10 12:00 | 89% | 99% | 27% (2026-01-05) | 94 | 27,539 |
+| LPSP 1%, none on ski days | 14.6 | 95 | 453 kW, 2026-03-21 20:00 | 0% | 47% | 22% (2026-03-24) | 354 | 5,508 |
 
 With a 1% limit, 92% of the shed energy falls on ski days and 48% within seven consecutive days starting 2026-01-05; up to 266 kW is shed at a time, against a peak load of 519 kW. The whole allowance is worth 5,508 $/yr. This is why the base case now requires that no load is shed.
 
 The mechanism: every kWh that is shed saves the same diesel cost (0.378 $/kWh), whatever the hour, so *when* to shed is a tie in cost. The diesel rating has no cost either (existing sets), and the tie-breaker of 0.001 $/kW-yr on it decides: the model sheds in the hours with the highest diesel output, because that lowers the rating it reports (the "Diesel kW" column). The reference case has the same LPSP limit as the case it is compared with, so it also changed to no shedding.
 
-`lpsp1_offpeak` allows 1% of the load to be shed but never on a ski day. It sheds 14.6 MWh in 97 hours (47% in December to March), saves 5,508 $/yr against the base case, and needs a diesel rating of 354 kW (base case 354 kW). Which of the other hours it sheds is again a tie in cost: the pattern in the table is one of many that cost the same.
+`lpsp1_offpeak` allows 1% of the load to be shed but never on a ski day. It sheds 14.6 MWh in 95 hours (47% in December to March), saves 5,508 $/yr against the base case, and needs a diesel rating of 354 kW (base case 354 kW). Which of the other hours it sheds is again a tie in cost: the pattern in the table is one of many that cost the same.
 
 ## PV tilt
 
@@ -71,7 +71,7 @@ The two cheapest tilts differ by 174 $/yr (0.06% of the cost).
 |---|---|---|---|---|---|---|---|---|---|---|
 | Base case, tilt 30 | 976 | 2,623 | 354 | 299,859 | 0.206 | 39.9% | 42.2% | 72.6% | 168 | 0.00% |
 | Load: low load | 457 | 1,112 | 143 | 129,662 | 0.203 | 40.9% | 43.2% | 74.4% | 73 | 0.00% |
-| Load: high load | 2,328 | 6,381 | 723 | 692,721 | 0.202 | 41.1% | 43.4% | 74.7% | 357 | 0.00% |
+| Load: high load | 2,328 | 6,381 | 723 | 692,723 | 0.202 | 41.1% | 43.4% | 74.7% | 357 | 0.00% |
 | Boundary: club loads only | 368 | 955 | 92 | 100,916 | 0.192 | 43.8% | 46.4% | 78.3% | 41 | 0.00% |
 | Irradiance: SARAH-3 unscaled | 954 | 2,446 | 363 | 309,370 | 0.212 | 38.0% | 40.2% | 68.9% | 191 | 0.00% |
 | Irradiance: ERA5 (tilt 40) | 1,063 | 2,713 | 284 | 250,240 | 0.172 | 49.8% | 52.3% | 86.3% | 97 | 0.00% |
@@ -96,20 +96,20 @@ The two cheapest tilts differ by 174 $/yr (0.06% of the cost).
 | LPSP limit: LPSP 2% | 976 | 2,623 | 187 | 288,843 | 0.202 | 40.8% | 43.1% | 72.6% | 138 | 2.00% |
 | LPSP limit: LPSP 5% | 976 | 2,623 | 94 | 272,320 | 0.197 | 42.2% | 44.6% | 72.6% | 95 | 5.00% |
 | LPSP limit: LPSP 1%, none on ski days | 976 | 2,623 | 354 | 294,351 | 0.204 | 40.3% | 42.6% | 72.6% | 153 | 1.00% |
-| Grid export: net metering at 0.27 $/kWh | 1,129 | 2,517 | 356 | 228,322 | 0.157 | 54.2% | 56.4% | 69.7% | 165 | 0.00% |
+| Grid export: net metering at 0.27 $/kWh | 1,129 | 2,517 | 356 | 228,322 | 0.157 | 54.2% | 56.4% | 72.2% | 165 | 0.00% |
 | Grid export: sold at 0.00 $/kWh | 976 | 2,623 | 354 | 299,859 | 0.206 | 39.9% | 42.2% | 72.6% | 168 | 0.00% |
 | Grid export: sold at 0.05 $/kWh | 1,098 | 2,774 | 348 | 288,382 | 0.198 | 42.2% | 44.6% | 75.7% | 150 | 0.00% |
 | Grid export: sold at 0.10 $/kWh | 1,199 | 2,773 | 346 | 274,671 | 0.189 | 44.9% | 47.4% | 77.0% | 145 | 0.00% |
 | Grid export: sold at 0.15 $/kWh | 1,283 | 2,773 | 346 | 259,693 | 0.178 | 47.9% | 50.4% | 77.9% | 141 | 0.00% |
 | Grid export: sold at 0.20 $/kWh | 1,344 | 2,779 | 345 | 243,729 | 0.167 | 51.1% | 53.6% | 78.5% | 138 | 0.00% |
-| Grid export: sold at 0.27 $/kWh | 1,465 | 2,819 | 342 | 218,813 | 0.150 | 56.1% | 58.6% | 76.5% | 132 | 0.00% |
+| Grid export: sold at 0.27 $/kWh | 1,465 | 2,819 | 342 | 218,813 | 0.150 | 56.1% | 58.6% | 78.1% | 132 | 0.00% |
 | T1 lift reserve: no reserve | 983 | 2,622 | 354 | 299,785 | 0.206 | 39.9% | 42.2% | 72.7% | 167 | 0.00% |
 | Cold-weather derating: capacity x 0.87 in Dec-Mar | 982 | 2,751 | 362 | 301,853 | 0.207 | 39.5% | 41.8% | 73.1% | 170 | 0.00% |
 | Diesel replaced: 750 $/kW | 1,012 | 2,818 | 308 | 325,726 | 0.224 | 39.9% | 42.1% | 74.4% | 153 | 0.00% |
 | Battery cost form: 139 $/kWh + 214 $/kW | 999 | 2,840 | 347 | 294,274 | 0.202 | 41.0% | 43.4% | 73.7% | 156 | 0.00% |
 | Grid connection: 5 MW connection | 980 | 2,642 | 319 | 298,619 | 0.205 | 40.1% | 42.5% | 72.8% | 145 | 0.00% |
 
-Across the load scenarios and the base case the cost ranges from 129,662 to 692,721 $/yr and the LCOE from 0.202 to 0.206 $/kWh.
+Across the load scenarios and the base case the cost ranges from 129,662 to 692,723 $/yr and the LCOE from 0.202 to 0.206 $/kWh.
 
 The T1 lift reserve of 30 kWh costs 74 $/yr: the base case costs 299,859 $/yr with it and 299,785 $/yr without (`no_T1_reserve`).
 
@@ -137,17 +137,19 @@ PV surplus may be exported while the feeder is on, within the connection capacit
 | Case | Exported MWh | Grid import MWh | Curtailed (base 29.0%) | PV kWp (change) | BESS kWh (change) | Cost $/yr | Saving $/yr | Saving | NPV $ |
 |---|---|---|---|---|---|---|---|---|---|
 | Base case, no export | 0 | 295 | 29.0% | 976 | 2,623 | 299,859 | 199,031 | 39.9% | 2,326,775 |
-| net metering at 0.27 $/kWh | 337 | 337 | 21.5% | 1,129 (+153) | 2,517 (-106) | 228,322 | 270,568 | 54.2% | 3,097,926 |
-| sold at 0.00 $/kWh | 75 | 295 | 24.0% | 976 (+0) | 2,623 (+0) | 299,859 | 199,031 | 39.9% | 2,326,775 |
+| net metering at 0.27 $/kWh | 301 | 301 | 21.5% | 1,129 (+153) | 2,517 (-106) | 228,322 | 270,568 | 54.2% | 3,097,926 |
+| sold at 0.00 $/kWh | 0 | 295 | 29.0% | 976 (+0) | 2,623 (+0) | 299,859 | 199,031 | 39.9% | 2,326,775 |
 | sold at 0.05 $/kWh | 256 | 272 | 19.0% | 1,098 (+123) | 2,774 (+151) | 288,382 | 210,508 | 42.2% | 2,465,832 |
 | sold at 0.10 $/kWh | 288 | 258 | 22.9% | 1,199 (+223) | 2,773 (+150) | 274,671 | 224,219 | 44.9% | 2,618,093 |
 | sold at 0.15 $/kWh | 311 | 249 | 26.1% | 1,283 (+307) | 2,773 (+150) | 259,693 | 239,197 | 47.9% | 2,784,724 |
 | sold at 0.20 $/kWh | 327 | 245 | 28.3% | 1,344 (+368) | 2,779 (+156) | 243,729 | 255,161 | 51.1% | 2,962,536 |
-| sold at 0.27 $/kWh | 397 | 278 | 32.4% | 1,465 (+489) | 2,819 (+196) | 218,813 | 280,077 | 56.1% | 3,239,603 |
+| sold at 0.27 $/kWh | 374 | 254 | 32.4% | 1,465 (+489) | 2,819 (+196) | 218,813 | 280,077 | 56.1% | 3,239,603 |
 
-At a price of 0 exporting and curtailing are worth the same, so that row has the base-case sizes and cost, and its split between exported and curtailed energy is arbitrary.
+At a price of 0 export has no value: 0.0 MWh is exported and the cost is 299,859 $/yr, against 299,859 $/yr in the base case.
 
-Net metering: 337 MWh exported against 337 MWh imported, so the grid bill is 0 $/yr (base case 79,685 $/yr). The cost falls by 71,537 $/yr against the base case.
+Where exporting is a tie in cost (price 0, or a credit equal to the tariff, where importing and exporting in the same hour would cost nothing) a tie-breaker of 1e-05 $/kWh on export makes the model export only what has value. Largest import and export in the same hour over the export cases: 0.0e+00 kW.
+
+Net metering: 301 MWh exported against 301 MWh imported, so the grid bill is 0 $/yr (base case 79,685 $/yr). The cost falls by 71,537 $/yr against the base case.
 
 ## Finance: NPV, IRR and payback
 
@@ -158,7 +160,7 @@ Cash flows in constant USD, unlevered and before tax, over 25 years, discounted 
 - PV output falls by 0.7% per year. Dispatch is re-optimized with the sizes fixed for years 1, 5, 10, 15, 20, 25, with the diesel limited to the reference rating (the existing plant), and interpolated linearly in between.
 - Year 15: battery replaced at 192 $/kWh. Year 25: salvage for the remaining life of the PV and of the second battery, linear.
 
-Base case: investment 1,235,352 $ (PV 731,671, battery 503,680). Saving 325,726 $ in year 1 and 307,595 $ in year 25. Battery replacement 503,680 $, salvage 289,839 $. **NPV 2,326,775 $, IRR 25.8%, simple payback 3.8 years, discounted payback 4.6 years.** With the low battery replacement cost of 125 $/kWh the NPV is 2,378,984 $. The yearly figures are in `cashflow_base.csv`.
+Base case: investment 1,235,352 $ (PV 731,671, battery 503,680). Saving 325,726 $ in year 1 and 307,595 $ in year 25. Battery replacement 503,680 $, salvage 289,839 $. **NPV 2,326,775 $, IRR 25.8%, simple payback 3.8 years, discounted payback 4.6 years.** With the low battery replacement cost of 125 $/kWh the NPV is 2,378,984 $. The yearly figures are in `cashflow_base.csv`. The replacement is costed at the base value in every run, also in the battery-cost sensitivities; `table_finance.csv` gives the NPV with the low value next to it.
 
 NPV of the base case against the discount rate (`fig_npv_vs_rate.png`):
 
@@ -192,13 +194,13 @@ NPV of the base case against the discount rate (`fig_npv_vs_rate.png`):
 
 In the diesel-replacement case both the reference and the microgrid buy new sets, so the cash flow carries the difference in diesel capex (-158,124 $: the microgrid needs 308 kW, the reference 519 kW), again after 15 years, with its salvage. Its later-year dispatch is limited to the rating that was bought.
 
-Shedding in the later project years (degraded PV, diesel limited as above): the largest LPSP over all finance runs and years is 0.009% (run `diesel_capex`), the largest unserved critical energy 0.0 kWh.
+Later project years: with the diesel limited to the reference rating no load can go unserved, because that rating alone carries the peak; what changes is how much diesel is used. The base case needs 354 kW of diesel in year 1 and up to 356 kW in the later years, of the 519 kW available. Largest LPSP over all finance runs and years: 0.009% (run `diesel_capex`, whose diesel is limited to the rating it bought); largest unserved critical energy 0.0 kWh.
 
 Consistency check for the base case: without PV degradation, replacement and salvage the NPV is 2,523,204 $. The annualized-cost saving divided by CRF(i, 25) is 2,296,623 $. The gap of 226,581 $ has four parts: the annualized cost spreads the PV over 30 years, not 25 (-43,766 $), and the battery over 15 years (138,884 $); the diesel capex difference (0 $); and the throughput cost, which is in the annualized cost only (131,463 $). Unexplained: 0 $.
 
 ## Weather robustness (base-case PV and battery, dispatch re-optimized)
 
-PV yield of each weather year 2014-2023 at tilt 30 deg, same load and grid. Main variant: the diesel is limited to the existing plant, taken as the rating that carries the reference case (519 kW). Second variant: the diesel is limited to what the base case needs (354 kW). Load may be shed at a penalty, so a shortfall shows up as LPSP above 0% or as unserved critical load.
+PV yield of each weather year 2014-2023 at tilt 30 deg, same load and grid. Main variant: the diesel is limited to the existing plant, taken as the rating that carries the reference case (519 kW). That rating alone carries the peak, so in this variant no load can go unserved: its results are the cost and the diesel rating used. Second variant: the diesel is limited to what the base case needs (354 kW); load may be shed at a penalty, so a shortfall shows up as LPSP above 0% or as unserved critical load.
 
 | Year | Cost $/yr | LPSP | Unserved critical kWh | Diesel kW used | Diesel MWh | Second variant: LPSP | Second variant: unserved critical kWh |
 |---|---|---|---|---|---|---|---|
@@ -247,24 +249,24 @@ From the prototype to the base case of this study:
 
 - Inputs: 84 of 84 annual sums and peaks match `inputs/inputs_summary.md` (`input_checks.csv`).
 - 48-hour tests (`model/tests/test_small_case.m`): all hand-calculated cases reproduced, including export limits, the net-metering cap, the lift reserve and NPV/IRR.
-- Base case LP: 96,366 variables, 26,280 equality and 70,082 inequality constraints, 278,706 non-zeros. Solver status: optimal. Solve time 5.9 s.
+- Base case LP: 96,366 variables, 26,280 equality and 70,082 inequality constraints, 278,706 non-zeros. Solver exit flag 1 (1 = optimal). Solve time 5.5 s.
 - Power balance residual: at most 1.1e-13 kW in any hour.
 - Battery energy balance and cyclic condition: residual at most 1.0e-12 kWh.
 - Simultaneous charge and discharge: 0 hours (largest overlap 0.0e+00 kW).
-- T1 lift reserve: largest shortfall 0.0e+00 kWh in the 640 hours in which the lift runs.
-- Diesel: runs 778 hours. Hours with diesel while PV is curtailed: 0; while the grid has spare capacity: 0; while the battery charges: 0.
+- T1 lift reserve: largest shortfall 0.0e+00 kWh at the start or end of the 640 hours in which the lift runs.
+- Diesel: runs 776 hours. Hours with diesel while PV is curtailed: 0; while the grid has spare capacity: 0; while the battery charges: 0.
 - Dispatch-only run with the design weather year (2015) and the base-case PV and battery: cost differs from the base case by 0.00 $/yr.
 - The sweep point at the base diesel price differs from the base case by 0.00 $/yr.
-- Across the 50 sizing runs: largest power balance residual 2.3e-13 kW, largest overlap of charge and discharge 0.0e+00 kW, largest violation of the export limits 0.0e+00 kW and of the lift reserve 5.7e-14 kWh.
+- Across the 50 sizing runs: largest power balance residual 2.3e-13 kW, largest overlap of charge and discharge 0.0e+00 kW, largest violation of the export limits 0.0e+00 kW and of the lift reserve 0.0e+00 kWh.
 
 ## Diesel sets and minimum load
 
-The committed-capacity form (5) gives u_dg = p_dg in every hour (largest gap 0.0e+00 kW in the base case). It treats the plant as many small sets, so the 30% minimum load never binds and fuel use is (a + b) = 0.259 L/kWh. The existing plant is assumed to be several sets that together carry the reference case (519 kW). The LP is kept as it is; this check counts, for the base case, the diesel hours (of 778) that equal sets could not cover with each running set at or above 30%:
+The committed-capacity form (5) gives u_dg = p_dg in every hour (largest gap 0.0e+00 kW in the base case). It treats the plant as many small sets, so the 30% minimum load never binds and fuel use is (a + b) = 0.259 L/kWh. The existing plant is assumed to be several sets that together carry the reference case (519 kW). The LP is kept as it is; this check counts, for the base case, the diesel hours (of 776) that equal sets could not cover with each running set at or above 30%:
 
 | Plant | 1 set | 2 sets | 3 sets |
 |---|---|---|---|
-| Sets totalling the rating the base case needs (354 kW) | 99 h | 41 h | 33 h |
-| Sets totalling the existing plant (519 kW) | 290 h | 66 h | 40 h |
+| Sets totalling the rating the base case needs (354 kW) | 96 h | 40 h | 32 h |
+| Sets totalling the existing plant (519 kW) | 287 h | 63 h | 39 h |
 
 Full-load efficiency in every hour understates fuel use in both cases. The reference burns 5.8 times the fuel of the microgrid (252,947 against 43,392 L), so the same relative part-load penalty would add more cost to the reference: on that reading the reported savings are conservative.
 
@@ -274,7 +276,7 @@ Full-load efficiency in every hour understates fuel use in both cases. The refer
 - **EDL fixed charge.** 0.6 $/kVA per month is paid on the same connection in the reference and in the microgrid, so it cancels in every saving, NPV and IRR. It is not part of the absolute costs or of the LCOE.
 - **Existing diesel plant.** Its capacity is not known. It is taken as the rating that carries the reference case (519 kW in the base case), in several sets, at no capital cost. Runs with fixed PV and battery (weather years, later project years) limit the diesel to that rating.
 - **Zero-cost sizes.** The diesel rating and, with the all-in battery cost, the PCS rating have no cost, so the LP alone does not fix them. A tie-breaker of 0.001 $/kW-yr makes the solver return the smallest rating that is enough. It is excluded from every reported cost.
-- **T1 lift reserve.** In every hour in which the T1 chairlift runs the battery holds at least SOC_min E_b + 30 kWh (EN 13223 recovery drive). The reference has no battery, so the rule does not apply there: its recovery drive runs on the gensets, as today.
+- **T1 lift reserve.** In every hour in which the T1 chairlift runs the battery holds at least SOC_min E_b + 30 kWh (EN 13223 recovery drive), at the start and at the end of the hour. The brief states the rule for the start of the hour; the end is added so that the reserve is there while the lift runs. The reference has no battery, so the rule does not apply there: its recovery drive runs on the gensets, as today.
 - **Battery cost.** All-in 192 $/kWh on `E_b`, with the power rating limited to 0.5C. O&M is 2.5% of the capex per year. `batt_split` uses 139 $/kWh + 214 $/kW instead.
 - **Snow 15%.** The series without snow, multiplied by 0.85 in December to March.
 - **Cold-weather derating.** The usable capacity (1 - SOC_min) E_b is multiplied by the factor in December to March (upper SOC bound lowered).

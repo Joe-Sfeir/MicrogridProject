@@ -285,7 +285,8 @@ fig = new_figure(9, 0.36 * n + 1.5);
 ax = axes('Position', [0.22 0.13 0.74 0.78]);
 hold on
 xmin = min([Tn.lo]);  xmax = max([Tn.hi]);
-pad = 0.30 * (xmax - xmin);
+pad = 0.30 * (xmax - xmin);                              % room for the labels at the bar ends
+pad_left = 0.48 * (xmax - xmin);
 for j = 1:n
     y = n - j + 1;
     if Tn(j).lo < base
@@ -302,7 +303,7 @@ end
 plot([base base], [0.4 n + 0.6], '-', 'Color', c.ink, 'LineWidth', 1);
 hold off
 set(ax, 'Box', 'off', 'TickDir', 'out', 'XColor', c.ink2, 'YColor', c.ink2, 'YTick', 1:n, ...
-        'YTickLabel', fliplr({Tn.group}), 'YLim', [0.4 n + 0.6], 'XLim', [xmin - pad, xmax + pad], ...
+        'YTickLabel', fliplr({Tn.group}), 'YLim', [0.4 n + 0.6], 'XLim', [xmin - pad_left, xmax + pad], ...
         'XGrid', 'on', 'YGrid', 'off', 'GridLineStyle', '-');
 try %#ok<TRYNC>
     set(ax, 'GridColor', c.rule, 'GridAlpha', 1);
