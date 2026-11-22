@@ -1,8 +1,8 @@
 # Results: Faqra Club PV + battery microgrid (LP model)
 
-Written by `model/main.m` on 2026-11-22 13:37 with GNU Octave 8.4.0. Solver: HiGHS dual simplex (scipy, called from GNU Octave). Run time 328 s. Do not edit by hand: re-run `main` to regenerate every file in this folder.
+Written by `model/main.m` on 2026-11-22 13:56 with GNU Octave 8.4.0. Solver: HiGHS dual simplex (scipy, called from GNU Octave). Run time 341 s. Do not edit by hand: re-run `main` to regenerate every file in this folder.
 
-**These numbers were produced with GNU Octave and HiGHS, not with MATLAB.** The model code is the same; in MATLAB `solve_lp.m` calls `linprog`. Re-run `main` in MATLAB before quoting the numbers in the paper. The optimal cost of an LP is unique, so the costs should agree; sizes and the hourly dispatch can differ slightly where several solutions are equally cheap.
+**These numbers were produced with GNU Octave and HiGHS, not with MATLAB.** The model code is the same; in MATLAB `solve_lp.m` calls `linprog`. Re-run `main` in MATLAB before quoting the numbers in the paper. The optimal cost of an LP is unique, so the costs should agree; sizes and the hourly dispatch can differ slightly where several solutions are equally cheap. From R2024a `linprog` uses HiGHS by default; with older releases it uses another dual simplex, whose run time on this problem has not been tested: start with `main('quick')`.
 
 ## Base case
 
@@ -30,7 +30,7 @@ Saving against the reference: **199,105 $/yr (40.4%)**, and 693 t CO2 per year.
 
 Cost breakdown of the base case ($/yr): PV capex 60,040, PV O&M 17,685, battery capex 55,655, battery O&M 12,585, battery degradation 11,406, diesel capex 0, fuel 55,569, diesel O&M 1,948, grid energy 79,389.
 
-The 1% of load that may be shed is non-critical load only. The model uses the allowance in the hours that set the diesel rating: load is shed in 126 hours, up to 266 kW at a time, and 100% of the shed energy falls in December to March (`fig_dispatch_winter_week.png` shows some of these hours). With LPSP 0% nothing is shed; the `lpsp_0` sensitivity gives the cost and the diesel rating of that design.
+The 1% of load that may be shed is non-critical load only. The model uses the allowance in the hours that set the diesel rating: load is shed in 126 hours, up to 266 kW at a time, and 100% of the shed energy falls in December to March.
 
 ## PV tilt
 
@@ -41,7 +41,7 @@ The 1% of load that may be shed is non-critical load only. The model uses the al
 | Base case, tilt 50 | 1,042 | 2,603 | 230 | 297,181 | 0.206 | 39.8% | 73.2% | 154 | 1.00% |
 | Base case, tilt 60 | 1,098 | 2,524 | 231 | 303,331 | 0.210 | 38.5% | 72.4% | 161 | 1.00% |
 
-The two cheapest tilts differ by 150 $/yr (0.05% of the cost), so the choice between them is not decided by cost.
+The two cheapest tilts differ by 150 $/yr (0.05% of the cost).
 
 ## Sensitivities (one change at a time from the base case)
 
@@ -80,11 +80,11 @@ The two cheapest tilts differ by 150 $/yr (0.05% of the cost), so the choice bet
 | Battery cost form: 139 $/kWh + 214 $/kW | 999 | 2,840 | 226 | 288,731 | 0.200 | 41.5% | 73.7% | 141 | 1.00% |
 | Grid connection: 5 MW connection | 980 | 2,642 | 211 | 293,035 | 0.203 | 40.6% | 72.8% | 130 | 1.00% |
 
-The load scenarios change the size of the system and its cost (127,237 to 679,649 $/yr) much more than the LCOE.
+Across the load scenarios and the base case the cost ranges from 127,237 to 679,649 $/yr and the LCOE from 0.200 to 0.204 $/kWh.
 
 ## Weather robustness (base-case sizes fixed, dispatch re-optimized)
 
-PV yield of each weather year 2014-2023 at tilt 30 deg, same load and grid. Load may be shed beyond the LPSP limit at a penalty, so a shortfall shows up as LPSP above 1% or as unserved critical load. (a) keeps the diesel rating at the base-case value of 233 kW; (b) lets the diesel rating be as large as needed, since the existing sets also carry the status quo.
+PV yield of each weather year 2014-2023 at tilt 30 deg, same load and grid. Load may be shed beyond the LPSP limit at a penalty, so a shortfall shows up as LPSP above 1% or as unserved critical load. (a) keeps the diesel rating at the base-case value of 233 kW; (b) lets the diesel rating be as large as needed, since the existing sets also carry the status quo. Unserved energy costs nothing in the reported cost, so under (a) a year that sheds more than the limit can look cheaper than under (b): use (b) to compare costs between years.
 
 | Year | (a) cost $/yr | (a) LPSP | (a) unserved critical kWh | (b) cost $/yr | (b) LPSP | (b) diesel kW | (b) diesel MWh |
 |---|---|---|---|---|---|---|---|
@@ -103,7 +103,7 @@ Worst year with all sizes fixed: LPSP 1.33% (2019), unserved critical load 0.0 k
 
 ## Cross-check against `tools/prototype_lp.py`
 
-With the prototype's settings (tilt 40 deg, 5 MW grid connection, battery O&M as 2.5% of the annualized capex, 1e-4 $/kWh on charging) the model gives the prototype's results:
+The model was run with the prototype's settings (tilt 40 deg, 5 MW grid connection, battery O&M as 2.5% of the annualized capex, 1e-4 $/kWh on charging). Largest difference to the prototype over the four runs: 0 $/yr in cost, 0.5 kWp of PV, 0.4 kWh of battery.
 
 | Run | PV kWp | BESS kWh | Cost $/yr | LCOE $/kWh | Renewable fraction | Diesel MWh |
 |---|---|---|---|---|---|---|
@@ -131,11 +131,11 @@ From the prototype to the base case of this study:
 
 - Inputs: 84 of 84 annual sums and peaks match `inputs/inputs_summary.md` (`input_checks.csv`).
 - 48-hour test (`model/tests/test_small_case.m`): all hand-calculated cases reproduced.
-- Base case LP: 87,606 variables, 26,280 equality and 70,082 inequality constraints, 261,186 non-zeros. Solver status: optimal. Solve time 5.9 s.
+- Base case LP: 87,606 variables, 26,280 equality and 70,082 inequality constraints, 261,186 non-zeros. Solver status: optimal. Solve time 6.3 s.
 - Power balance residual: at most 2.3e-13 kW in any hour.
 - Battery energy balance and cyclic condition: residual at most 3.9e-12 kWh.
 - Simultaneous charge and discharge: 0 hours (largest overlap 0.0e+00 kW).
-- Dispatch-only run with the design weather year (2015) and the base-case sizes gives the base-case cost again (difference 0.00 $/yr).
+- Dispatch-only run with the design weather year (2015) and the base-case sizes: cost differs from the base case by 0.00 $/yr.
 - Diesel: runs 841 hours. Hours with diesel while PV is curtailed: 0; while the grid has spare capacity: 0; while the battery charges: 0.
 - Committed capacity: u_dg equals p_dg in every hour (largest gap 0.0e+00 kW), so the minimum-load constraint (5c) never binds and fuel use is (a + b) = 0.259 L/kWh.
 - In 57 of the 841 diesel hours the output is below 30% of the full rating of 233 kW, which one single set of that size could not do.
@@ -160,7 +160,7 @@ PV degradation over the years, the EDL fixed charge (0.6 $/kVA per month), grid 
 
 | File | Content |
 |---|---|
-| `runs_all.csv` | Every run: sizes, cost breakdown, energies, emissions, checks, solver |
+| `runs_all.csv` | Reference, tilts, sensitivities, weather years and cross-check steps: sizes, cost breakdown, energies, emissions, checks, solver |
 | `table_base_vs_reference.csv` | Base case next to the reference |
 | `table_tilt.csv` | Base case at tilt 30/40/50/60 |
 | `table_sensitivities.csv` | Base case and all sensitivities |
