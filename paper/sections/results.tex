@@ -15,9 +15,11 @@ irradiance, snow and tilt cases the optimum stays within 950--1,090~kWp and 2,45
 practical design is about 1~MWp of PV with 2.5~MWh of storage. The annualized cost falls
 by \$199,031/yr (39.9\%) and the LCOE from 0.342 to 0.206~\$/kWh. Battery wear is counted twice, once
 in the 15-year capital recovery and again in the 0.020~\$/kWh throughput cost~\cite{seger2023}.
-Without the throughput cost the saving is 42.2\%, so the figures reported are conservative. At 217
-cycles per year the cells reach about 3,260 cycles in 15 years, so calendar ageing, not cycling, sets
-the replacement date.
+At 217 cycles per year the cells reach about 3,260 cycles in 15 years, so calendar ageing, not
+cycling, sets the replacement date, and the 15-year replacement already pays for this wear. The
+throughput cost therefore does not represent additional wear; it is a deliberate penalty that
+discourages cycling the battery for marginal gains. Without it the saving is 42.2\%, so the figures
+reported are conservative.
 
 \begin{table}[!t]
 \centering
@@ -99,9 +101,12 @@ fuel and diesel maintenance.
 inverters, the battery converters and installation (Table~\ref{tab:param}), but not the grid-side works
 of Fig.~\ref{fig:sld}: the 1,000~kVA transformer, the 20~kV breaker and intertie relay, the controller,
 MV cabling and engineering. Table~\ref{tab:capex} adds them as a 25\% allowance on the PV and battery
-cost. The investment then rises to \$1.54M, and the NPV falls to \$1.99M, with an IRR of 20.1\% and
-simple and discounted paybacks of 4.8 and 6.1 years. Battery O\&M is a share of the capital cost, so it
-rises as well.
+cost, a feasibility-stage placeholder; a component-by-component estimate from supplier quotes is
+left to future work. The investment then rises to \$1.54M, and the NPV falls to \$1.99M, with an IRR
+of 20.1\% and simple and discounted paybacks of 4.8 and 6.1 years. In these runs the allowance was
+applied to the battery unit cost, and battery O\&M is set as 2.5\% of that cost, so it rose by about
+\$3.1k/yr. One-time grid-side works do not add battery maintenance, so this overstates the O\&M
+slightly and makes the NPV and IRR with the allowance conservative.
 
 \begin{table}[!t]
 \centering
@@ -125,9 +130,11 @@ Investment with allowance & 1,544 \\
 
 \emph{Combined downside.} The sensitivities change one input at a time. To test the chosen design
 against several adverse inputs at once, its sizes were fixed and the year was re-run with the low
-irradiance series, a diesel price of 0.80~\$/L and the 25\% cost allowance. The annual saving falls to
-\$27k (8.4\%), but the NPV stays positive at \$0.37M, with an IRR of 9.7\% and a discounted payback of
-14 years. The design therefore still pays at the base discount rate, but not at 12.4\%. Re-optimized
+irradiance series, a diesel price of 0.80~\$/L and the 25\% cost allowance. The annualized saving,
+the reduction in total supply cost after the investment is recovered through the CRF, falls to
+\$27k/yr (8.4\%). This is not the yearly operating cash saving, which excludes capital recovery and
+is much larger; the NPV is built from the cash savings and stays positive at \$0.37M, with an IRR of
+9.7\% and a discounted payback of 14 years. The design therefore still pays at the base discount rate, but not at 12.4\%. Re-optimized
 for the same inputs, the system shrinks to 622~kWp and 1,132~kWh, with an NPV of \$0.61M and an IRR of
 14.6\%. The investment is robust to any single adverse input. If cheap diesel and high costs were
 expected together, a smaller first phase would be the better choice.

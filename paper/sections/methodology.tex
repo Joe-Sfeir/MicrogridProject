@@ -119,4 +119,8 @@ dispatch for each weather year from 2014 to 2023.
 The model is written in MATLAB and solved with \texttt{linprog} (HiGHS dual simplex). The base case has
 96,366 variables and 96,362 constraints and solves in about 6~s. It was verified against a 48-hour case
 with a hand-calculated optimum and against an independent Python implementation, which gave identical
-costs.
+costs. The model departs from the course formulation in three ways. It imposes no minimum renewable
+share, whereas the course slides require at least 60\%; the share is a result, 72.6\% in the base case
+but 58.1\% at a diesel price of 0.80~\$/L. The battery may charge from the grid or the diesel plant as
+well as from PV. A full 8,760-hour year is modelled instead of one representative day repeated 365
+times.

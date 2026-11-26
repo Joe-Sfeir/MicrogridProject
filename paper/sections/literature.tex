@@ -1,0 +1,36 @@
+% Section II -- Literature Review
+\section{Literature Review}
+
+\subsection{PV--Battery Systems Under Unreliable Grids}
+An early Lebanese assessment found PV added to a diesel--unreliable-grid supply technically feasible but economically unattractive, with long paybacks unless supported by incentives~\cite{chedid2015}. Falling equipment costs have since changed this picture. For the American University of Beirut campus, Chedid \textit{et al.} sized a 2.4~MW PV array with a 9~MW/26.7~MWh battery that removed the diesel generators entirely for outages of up to six hours and limited them to 12\% of demand on the worst seven-hour outage day~\cite{chedid2020}. At Beirut Arab University, a 500~kW PV system coupled to the existing generators cost about USD~330,000, whereas a fully off-grid design would have required USD~5.1 million~\cite{tarnini2023}. Similar conclusions hold for other weak grids: a Ugandan hospital community could replace its emergency generators with 500~kWp of additional PV and 1,591~kWh of storage, lowering the levelized cost of energy (LCOE) by 26\%~\cite{felice2023}, and Le\'{o}n \textit{et al.} sized PV and hybrid storage for a hospital and a government building on a highly intermittent Colombian grid~\cite{leon2023}.
+
+\subsection{Sizing, Dispatch, and Reliability Formulations}
+The reviewed studies differ mainly in how they couple sizing and dispatch. Tarnini \textit{et al.} used HOMER~\cite{tarnini2023}, while Chedid \textit{et al.} combined a genetic algorithm for sizing with dynamic programming for the hourly power flow, restricted to each day's outage and peak-tariff hours to keep a full year tractable~\cite{chedid2020}. Mixed-integer linear programming (MILP) is increasingly used to size and dispatch in one problem: Le\'{o}n \textit{et al.} represented grid availability with a binary profile and priced energy not supplied in the objective~\cite{leon2023}, and Eissa \textit{et al.} used NREL's REopt to size a hospital micro-grid for outages of 7--24~h~\cite{eissa2026}. Rule-based hourly simulation remains useful where transparency matters, and showed that the best battery size depends strongly on tariff structure and degradation cost~\cite{gunawardana2014}. Degradation can be kept linear: Seger \textit{et al.} modeled capacity fade as a function of the energy cycled through the battery and found that ignoring it underestimates system cost by more than 20\%~\cite{seger2023}. Reliability is usually expressed through the loss of power supply probability (LPSP), the fraction of demand left unserved~\cite{yang2008}, or through critical-load coverage during outages. Eissa \textit{et al.} found that guaranteeing critical loads during 7--24~h outages added only 0.4--2.4\% to the net present cost~\cite{eissa2026}.
+
+\subsection{Mountain Sites and Ski Resorts}
+Altitude changes the solar resource. Kahl \textit{et al.} showed that Alpine PV benefits from stronger winter irradiance and snow-reflected light, and that snow albedo makes steeper tilts optimal, raising winter yield by up to about 12\%~\cite{kahl2019}. Ski-resort demand is sharply seasonal: six years of bills at an Italian resort with 15 lifts show December consumption more than ten times the summer level, and PV sized on the peak month promised an eight-year payback~\cite{scuderi2025}. Measured lift data from Madonna di Campiglio give 0.16--0.38~kWh per skier entry, which allows lift demand to be estimated from visitor numbers~\cite{viesi2023}. Lewicki and Niekurzak found PV the most profitable renewable option for a Polish ski resort, with a payback of nearly 11 years, but relied on the grid to absorb seasonal surpluses and did not consider storage~\cite{lewicki2024}.
+
+\subsection{Research Gap}
+Lebanese studies have focused on university campuses and other urban users~\cite{chedid2015,chedid2020,tarnini2023}, while mountain and ski-resort studies come from countries with reliable grids~\cite{kahl2019,lewicki2024,scuderi2025}, and none of the resort studies optimizes storage. To the authors' knowledge, no study has sized a PV--battery micro-grid for a mountain resort where an unreliable grid coincides with a winter demand peak, or combined that sizing with an electrical design and load partitioning. This paper addresses that gap; Table~\ref{tab:lit} summarizes the studies reviewed.
+
+\begin{table}[!t]
+\centering
+\caption{Summary of Key Case Studies}
+\label{tab:lit}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l >{\raggedright\arraybackslash}p{1.35cm} >{\raggedright\arraybackslash}p{1.45cm} >{\raggedright\arraybackslash}p{3.6cm}@{}}
+\toprule
+Ref. & Site & Method & Key finding \\
+\midrule
+\cite{chedid2020}   & Campus, Lebanon      & GA + DP              & 2.4~MW PV, 26.7~MWh BESS; no diesel for outages up to 6~h \\
+\cite{tarnini2023}  & Campus, Lebanon      & HOMER                & 500~kW PV with existing generators for USD~330k \\
+\cite{leon2023}     & Hospital, Colombia   & MILP                 & Intermittent grid; ageing and unserved-energy cost in sizing \\
+\cite{eissa2026}    & Hospital, USA        & MILP (REopt)         & Critical-load resilience costs 0.4--2.4\% of NPC \\
+\cite{felice2023}   & Hospital, Uganda     & MIQCP                & Full diesel phase-out; LCOE $-$26\% \\
+\cite{seger2023}    & Village, isolated    & MILP + DP            & Ignoring degradation underestimates cost by $>$20\% \\
+\cite{scuderi2025}  & Ski resort, Italy    & Monthly sizing, NPV  & PV only; 8-year payback; no storage modeled \\
+\cite{lewicki2024}  & Ski resort, Poland   & NPV/IRR              & PV most profitable; payback near 11 years; no storage \\
+\bottomrule
+\end{tabular}
+\end{table}
